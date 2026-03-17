@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeTrek - Interactive Timeline</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <canvas id="timeline-canvas"></canvas>
+        <button id="today-btn" class="today-button">Today</button>
+        <div class="scale-controls">
+            <button class="scale-btn" data-scale="hour">Hour</button>
+            <button class="scale-btn" data-scale="day">Day</button>
+            <button class="scale-btn" data-scale="week">Week</button>
+            <button class="scale-btn" data-scale="month">Month</button>
+            <button class="scale-btn" data-scale="quarter">Quarter</button>
+            <button class="scale-btn" data-scale="year">Year</button>
+            <button class="scale-btn" data-scale="decade">Decade</button>
+            <button class="scale-btn" data-scale="century">Century</button>
+            <button class="scale-btn" data-scale="millennium">Millennium</button>
+            <button class="scale-btn" data-scale="ten-thousand">10K Years</button>
+            <button class="scale-btn" data-scale="hundred-thousand">100K Years</button>
+            <button class="scale-btn" data-scale="million">Million Years</button>
+            <button class="scale-btn" data-scale="ten-million">10M Years</button>
+            <button class="scale-btn" data-scale="hundred-million">100M Years</button>
+            <button class="scale-btn" data-scale="billion">Billion Years</button>
+        </div>
+        <div class="data-controls">
+            <input type="file" id="csv-upload" accept=".csv" style="display: none;">
+            <button id="upload-btn" class="data-button">Upload CSV</button>
+            <button id="sample-data-btn" class="data-button">Load Sample Data</button>
+            <button id="clear-data-btn" class="data-button">Clear Data</button>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="edit-modal">
+        <div class="edit-modal-content">
+            <h3 class="edit-modal-title">Edit Item</h3>
+            <label class="edit-label">Name
+                <input type="text" id="edit-name" class="edit-input">
+            </label>
+            <label class="edit-label">Type
+                <select id="edit-type" class="edit-input">
+                    <option value="duration">Duration</option>
+                    <option value="event">Event</option>
+                </select>
+            </label>
+            <label class="edit-label">Start Date
+                <input type="date" id="edit-start" class="edit-input">
+            </label>
+            <div id="edit-end-group">
+                <label class="edit-label">End Date
+                    <input type="date" id="edit-end" class="edit-input">
+                </label>
+            </div>
+            <label class="edit-label">Notes
+                <textarea id="edit-notes" class="edit-input edit-textarea" rows="2"></textarea>
+            </label>
+            <div class="edit-modal-buttons">
+                <button id="edit-cancel-btn" class="edit-btn edit-btn-cancel">Cancel</button>
+                <button id="edit-save-btn" class="edit-btn edit-btn-save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
