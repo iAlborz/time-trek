@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+    <!-- Simplified logo mark: terminal dots are dropped and strokes thickened so the
+         shape still reads at 16px. Colours are literal — a favicon is a separate
+         document and can't inherit the page's custom properties. -->
+    <g fill="none" stroke-linecap="round" stroke-width="3">
+        <line x1="16" y1="3" x2="16" y2="29" stroke="#12232E" stroke-width="2.5"/>
+        <line x1="4" y1="10" x2="13.5" y2="10" stroke="#0F7A70"/>
+        <line x1="18.5" y1="10" x2="26" y2="10" stroke="#0F7A70"/>
+        <line x1="3" y1="16" x2="12" y2="16" stroke="#FF6B6B"/>
+        <line x1="20" y1="16" x2="29" y2="16" stroke="#FF6B6B"/>
+        <line x1="5" y1="22" x2="13.5" y2="22" stroke="#F5A623"/>
+        <line x1="18.5" y1="22" x2="25" y2="22" stroke="#F5A623"/>
+    </g>
+    <circle cx="16" cy="16" r="4.5" fill="#12232E"/>
+</svg>

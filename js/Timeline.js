@@ -6,6 +6,17 @@ import { TimelineData } from './TimelineData.js';
 import { TimelineRenderer } from './TimelineRenderer.js';
 import { TimelineAnimator } from './TimelineAnimator.js';
 
+// How precisely a date is expressed. Not stored as its own field — the date string
+// already encodes it ("2025" / "2025-03" / "2025-03-01" / "2025-03-01T14:30") and
+// round-trips through CSV and JSON unchanged, so precision is detected on read.
+// Each input type emits exactly the string format DateParser expects.
+const PRECISIONS = {
+    year:     { inputType: 'text',           hint: 'Year, or BC/BCE, AD/CE, and deep time: 3000 BC · 65 MYA · 4.5 BYA' },
+    month:    { inputType: 'month',          hint: '' },
+    day:      { inputType: 'date',           hint: '' },
+    datetime: { inputType: 'datetime-local', hint: '' },
+};
+
 export class Timeline {
     constructor(canvas) {
         // Core state
@@ -561,23 +572,27 @@ export class Timeline {
         document.getElementById('edit-modal-title').textContent = isEdit ? 'Edit Item' : 'Add Item';
         document.getElementById('edit-delete-btn').hidden = !isEdit;
 
+        const precisionSelect = document.getElementById('edit-precision');
+        const precision = isEdit ? this._detectPrecision(item._startDateStr) : 'day';
+        precisionSelect.value = precision;
+        this._applyPrecision(precision);
+        precisionSelect.onchange = () => this._changePrecision(precisionSelect.value);
+
         if (isEdit) {
             nameInput.value = item.name;
             typeSelect.value = item.type;
-            if (item.type === 'duration') {
-                startInput.value = this._toDateInputValue(item.startDate);
-                endInput.value = this._toDateInputValue(item.endDate);
-            } else {
-                startInput.value = this._toDateInputValue(item.date);
-                endInput.value = '';
-            }
             notesInput.value = item.notes || '';
+            const startDate = item.type === 'duration' ? item.startDate : item.date;
+            startInput.value = this._valueForInput(item._startDateStr, startDate, precision);
+            endInput.value = item.type === 'duration'
+                ? this._valueForInput(item._endDateStr, item.endDate, precision)
+                : '';
         } else {
             nameInput.value = '';
             typeSelect.value = 'event';
-            startInput.value = prefillDate ? this._toDateInputValue({ date: prefillDate }) : '';
-            endInput.value = '';
             notesInput.value = '';
+            startInput.value = prefillDate ? this._fromDate({ date: prefillDate }, precision) : '';
+            endInput.value = '';
         }
 
         endGroup.style.display = typeSelect.value === 'duration' ? 'block' : 'none';
@@ -604,16 +619,103 @@ export class Timeline {
         return isNaN(date.getTime()) ? null : date;
     }
 
-    // input[type=date] only handles years 1-9999; deep-time dates have no Date object.
-    // Must read in UTC: parseDate() turns "YYYY-MM-DD" into UTC midnight, so local
-    // accessors would report the previous day west of Greenwich.
-    _toDateInputValue(timelineDate) {
+    // ── Date precision ─────────────────────────────────────────────────────────
+
+    // Split a canonical date string into parts. Returns null for deep time
+    // ("4.5 BYA") and any other format we can't re-emit.
+    _dateParts(str) {
+        if (!str) return null;
+        const s = String(str).trim();
+        const full = s.match(/^(-?\d{1,6})-(\d{2})(?:-(\d{2}))?(?:[T ](\d{2}):(\d{2}))?$/);
+        if (full) {
+            return { year: full[1], month: full[2], day: full[3] || null, hour: full[4] || null, minute: full[5] || null };
+        }
+        const yearOnly = s.match(/^(-?\d{1,6})$/);
+        if (yearOnly) return { year: yearOnly[1], month: null, day: null, hour: null, minute: null };
+        return null;
+    }
+
+    _detectPrecision(str) {
+        const p = this._dateParts(str);
+        if (!p) return 'year';               // deep time and unknown formats are free text
+        if (p.hour !== null) return 'datetime';
+        if (p.day !== null) return 'day';
+        if (p.month !== null) return 'month';
+        return 'year';
+    }
+
+    _emitAtPrecision(parts, precision) {
+        if (!parts) return '';
+        if (precision === 'year') return String(parts.year);
+
+        // month/date/datetime inputs can't represent years outside 1-9999
+        const yearNum = parseInt(parts.year, 10);
+        if (!(yearNum >= 1 && yearNum <= 9999)) return '';
+
+        const y = String(yearNum).padStart(4, '0');
+        const mo = parts.month || '01';
+        const d = parts.day || '01';
+        if (precision === 'month') return `${y}-${mo}`;
+        if (precision === 'day') return `${y}-${mo}-${d}`;
+        return `${y}-${mo}-${d}T${parts.hour || '00'}:${parts.minute || '00'}`;
+    }
+
+    // Prefer the stored string — it's exactly what was typed or imported, so using it
+    // avoids a Date round-trip and the timezone skew that comes with one.
+    _valueForInput(rawStr, timelineDate, precision) {
+        const parts = this._dateParts(rawStr);
+        if (parts) return this._emitAtPrecision(parts, precision);
+        if (precision === 'year' && rawStr) return String(rawStr).trim();
+        return this._fromDate(timelineDate, precision);
+    }
+
+    _fromDate(timelineDate, precision) {
         if (!timelineDate || !timelineDate.date) return '';
         const d = timelineDate.date;
         if (isNaN(d.getTime())) return '';
-        const year = d.getUTCFullYear();
+
+        // parseDate reads "YYYY-MM-DD" as UTC but "...THH:mm" as local, so read back
+        // through whichever clock the string will be parsed with.
+        const local = precision === 'datetime';
+        const year = local ? d.getFullYear() : d.getUTCFullYear();
         if (year < 1 || year > 9999) return '';
-        return `${String(year).padStart(4, '0')}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+        if (precision === 'year') return String(year);
+
+        const p2 = n => String(n).padStart(2, '0');
+        const ys = String(year).padStart(4, '0');
+        const mo = p2((local ? d.getMonth() : d.getUTCMonth()) + 1);
+        if (precision === 'month') return `${ys}-${mo}`;
+        const day = p2(local ? d.getDate() : d.getUTCDate());
+        if (precision === 'day') return `${ys}-${mo}-${day}`;
+        return `${ys}-${mo}-${day}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
+    }
+
+    _applyPrecision(precision) {
+        const cfg = PRECISIONS[precision] || PRECISIONS.day;
+        ['edit-start', 'edit-end'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input.type !== cfg.inputType) input.type = cfg.inputType;
+            input.placeholder = precision === 'year' ? 'e.g. 1980, 3000 BC, 4.5 BYA' : '';
+        });
+        const hint = document.getElementById('edit-date-hint');
+        hint.textContent = cfg.hint;
+        hint.hidden = !cfg.hint;
+    }
+
+    // Switching precision keeps what's already entered: truncating to the coarser
+    // part, or filling the finer parts with defaults.
+    _changePrecision(precision) {
+        const ids = ['edit-start', 'edit-end'];
+        // read every value before touching .type — changing type discards the value
+        const converted = ids.map(id => {
+            const input = document.getElementById(id);
+            const parts = this._dateParts(input.value);
+            if (parts) return this._emitAtPrecision(parts, precision);
+            return precision === 'year' ? input.value.trim() : '';
+        });
+
+        this._applyPrecision(precision);
+        ids.forEach((id, i) => { document.getElementById(id).value = converted[i]; });
     }
 
     // Descendants of `item` (plus itself) can't become its own parent
@@ -682,6 +784,16 @@ export class Timeline {
         const hadDate = isEdit && (item.startDate || item.date);
         if (!startStr && !hadDate) {
             this._setModalError('Start date is required.');
+            return false;
+        }
+
+        // Year precision is free text, so it can hold anything the user typed
+        if (startStr && !parseDate(startStr, this.centerDate)) {
+            this._setModalError(`Could not read "${startStr}" as a start date.`);
+            return false;
+        }
+        if (type === 'duration' && endStr && !parseDate(endStr, this.centerDate)) {
+            this._setModalError(`Could not read "${endStr}" as an end date.`);
             return false;
         }
 

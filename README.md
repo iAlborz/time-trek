@@ -90,7 +90,8 @@ Deep-time values are positioned by day offset from today rather than by a real `
 
 ```
 index.html          Timeline view
-projects.html       Project list (entry point)
+projects.html       Project list (entry point) — inlines the logo mark as SVG
+favicon.svg         Simplified logo mark for the browser tab
 style.css           Design tokens (:root) + all UI styling
 js/
   main.js           Timeline bootstrap, button wiring, sample data

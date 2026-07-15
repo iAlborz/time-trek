@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeTrek - Interactive Timeline</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body class="timeline-page">
     <div class="container">
@@ -68,6 +69,15 @@
             <label class="edit-label">Parent
                 <select id="edit-parent" class="edit-input"></select>
             </label>
+            <label class="edit-label">Precision
+                <select id="edit-precision" class="edit-input">
+                    <option value="year">Year</option>
+                    <option value="month">Month</option>
+                    <option value="day">Day</option>
+                    <option value="datetime">Date &amp; time</option>
+                </select>
+            </label>
+            <p class="edit-hint" id="edit-date-hint" hidden></p>
             <label class="edit-label">Start Date
                 <input type="date" id="edit-start" class="edit-input">
             </label>
