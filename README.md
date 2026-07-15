@@ -8,17 +8,36 @@ No build step, no dependencies, no server-side anything. It's vanilla JavaScript
 
 ## Quick start
 
-TimeTrek uses ES modules, so it needs to be served over HTTP — opening `index.html` directly via `file://` will fail on CORS.
+Download or clone this repo, then:
+
+| | |
+|---|---|
+| **macOS** | Double-click **`Start TimeTrek.command`** |
+| **Windows** | Double-click **`Start TimeTrek.bat`** |
+| **Linux** | Run **`./start-timetrek.sh`** |
+
+A terminal window opens, the app opens in your browser, and you're going. Leave that window open while you use TimeTrek; closing it stops the server.
+
+Then click **Open Sample Project** for a populated 81-item timeline to poke at, or **New Project** to start empty. **Download sample project** saves that same demo as a `.timetrek.json` file.
+
+<details>
+<summary>Prefer to do it yourself, or the launcher didn't work?</summary>
+
+Any static file server will do:
 
 ```bash
-git clone https://github.com/iAlborz/time-trek.git
-cd time-trek
-python3 -m http.server 8000
+python3 -m http.server 8000     # or: npx serve
 ```
 
-Then open <http://localhost:8000/projects.html> and click **Open Sample Project** to get a populated 81-item timeline to poke at, or **New Project** to start empty. **Download sample project** saves that same demo as a `.timetrek.json` file.
+Then open <http://localhost:8000/projects.html>.
 
-Any static file server works — `npx serve` is fine too.
+**Why is a server needed at all?** There's no build step, but the app loads its JavaScript as ES modules, and browsers refuse to load modules over `file://` (the origin is `null`, so it trips CORS). Opening `index.html` by double-clicking it will not work. The launcher scripts just start one of these servers for you.
+
+**The launcher needs Python, Ruby, or Node** — it uses whichever it finds. macOS no longer ships Python, so if none are present the script says so and points you at [python.org](https://www.python.org/downloads/).
+
+**macOS may refuse to open the launcher** if you downloaded the repo as a ZIP, saying it's *"from an unidentified developer"* — that's Gatekeeper quarantining downloaded files. Right-click the file → **Open** → **Open**, once. Cloning with `git` instead avoids this entirely.
+
+</details>
 
 ## How it works
 
@@ -93,6 +112,9 @@ index.html          Timeline view
 projects.html       Project list (entry point) — inlines the logo mark as SVG
 favicon.svg         Simplified logo mark for the browser tab
 style.css           Design tokens (:root) + all UI styling
+start-timetrek.sh   Local server + browser launcher (macOS/Linux)
+Start TimeTrek.command   macOS double-click wrapper for the above
+Start TimeTrek.bat  Local server + browser launcher (Windows)
 js/
   main.js           Timeline bootstrap, button wiring
   projects-main.js  Projects page bootstrap
