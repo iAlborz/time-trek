@@ -317,9 +317,71 @@ body.projects-page {
 
 .edit-modal-buttons {
     display: flex;
+    align-items: center;
     gap: 8px;
     justify-content: flex-end;
     margin-top: 18px;
+}
+
+.edit-buttons-spacer {
+    flex: 1;
+}
+
+.edit-error {
+    margin-top: 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background-color: var(--color-danger-surface);
+    color: var(--color-danger);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.edit-delete-confirm {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border-subtle);
+}
+
+.edit-delete-warning {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.edit-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.edit-check input {
+    margin-top: 1px;
+    accent-color: var(--color-danger);
+    flex-shrink: 0;
+}
+
+.edit-btn-danger {
+    background-color: var(--color-danger);
+    color: var(--color-text-on-fill);
+}
+
+.edit-btn-danger:hover {
+    background-color: #A93226;
+}
+
+.edit-btn-danger-text {
+    background: none;
+    color: var(--color-danger);
+}
+
+.edit-btn-danger-text:hover {
+    background-color: var(--color-danger-surface);
 }
 
 .edit-btn {

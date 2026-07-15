@@ -97,16 +97,63 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // ── Add Item ────────────────────────────────────────────────────────────────
+    document.getElementById('add-item-btn').addEventListener('click', () => {
+        // Prefill with whatever date is currently centred on screen
+        timeline.openItemModal({ prefillDate: timeline.dateAtX(window.innerWidth / 2) });
+    });
+
     // ── Edit Modal Buttons ──────────────────────────────────────────────────────
     document.getElementById('edit-save-btn').addEventListener('click', () => {
-        timeline.applyEdit();
-        debouncedSave();
+        // Only save if validation passed — the modal stays open otherwise
+        if (timeline.applyEdit()) debouncedSave();
     });
     document.getElementById('edit-cancel-btn').addEventListener('click', () => {
         timeline.closeEditModal();
     });
     document.getElementById('edit-modal').addEventListener('click', (e) => {
         if (e.target.id === 'edit-modal') timeline.closeEditModal();
+    });
+
+    // ── Delete Item ─────────────────────────────────────────────────────────────
+    const deleteConfirm = document.getElementById('edit-delete-confirm');
+    const mainButtons = document.getElementById('edit-main-buttons');
+    const childrenRow = document.getElementById('edit-delete-children-row');
+    const childrenBox = document.getElementById('edit-delete-children');
+
+    document.getElementById('edit-delete-btn').addEventListener('click', () => {
+        const item = timeline.getCurrentModalItem();
+        if (!item) return;
+
+        const descendantCount = timeline.countDescendants(item);
+        document.getElementById('edit-delete-warning').textContent = `Delete "${item.name}"?`;
+
+        if (descendantCount > 0) {
+            childrenRow.hidden = false;
+            childrenBox.checked = false;
+            document.getElementById('edit-delete-children-text').textContent =
+                descendantCount === 1
+                    ? 'Also delete its 1 nested item (otherwise it moves up a level)'
+                    : `Also delete its ${descendantCount} nested items (otherwise they move up a level)`;
+        } else {
+            childrenRow.hidden = true;
+        }
+
+        mainButtons.hidden = true;
+        deleteConfirm.hidden = false;
+    });
+
+    document.getElementById('edit-delete-cancel').addEventListener('click', () => {
+        deleteConfirm.hidden = true;
+        mainButtons.hidden = false;
+    });
+
+    document.getElementById('edit-delete-confirm-btn').addEventListener('click', () => {
+        if (timeline.deleteCurrentItem(!childrenRow.hidden && childrenBox.checked)) {
+            deleteConfirm.hidden = true;
+            mainButtons.hidden = false;
+            debouncedSave();
+        }
     });
 
     // ── Data Menu ───────────────────────────────────────────────────────────────

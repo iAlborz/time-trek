@@ -35,6 +35,14 @@ Every item is one of two types:
 
 Items nest via `Parent Item`, which references another item's name. Parents render as expandable bars containing their children.
 
+### Editing
+
+**+ Add Item** opens a form prefilled with the date currently centred on screen. Double-clicking empty space on the timeline does the same, prefilled with the date you clicked. Pick a **Parent** to nest the item; the dropdown lists the existing hierarchy and hides the item's own descendants, so you can't make a loop.
+
+Click the pencil beside any item to edit it, including moving it to a different parent. **Delete** asks first: by default an item's children move up to take its place, or you can tick the box to delete the whole subtree.
+
+Dates use `input[type=date]`, so **the form can only express real calendar dates (years 1–9999)**. Deep-time items (`4.5 BYA`, `3000 BC`) can be imported from CSV and will render fine, but their date field shows blank in the form and can only be changed by editing the CSV/JSON. Editing such an item's name or notes is safe — leaving the date blank keeps the existing date rather than clearing it.
+
 ### Importing CSV
 
 **Import CSV** accepts a file with these columns:

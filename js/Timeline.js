@@ -1,7 +1,7 @@
 // Timeline.js — Orchestrator: state, events, marker generation, module wiring
 
 import { TimeScale, MONTH_NAMES_SHORT, MONTH_DAYS, dayOfYearToMonthDay } from './TimeScale.js';
-import { parseDate } from './DateParser.js';
+import { parseDate, MS_PER_DAY } from './DateParser.js';
 import { TimelineData } from './TimelineData.js';
 import { TimelineRenderer } from './TimelineRenderer.js';
 import { TimelineAnimator } from './TimelineAnimator.js';
@@ -187,6 +187,17 @@ export class Timeline {
 
         this.canvas.addEventListener('mouseup', () => { this.isDragging = false; });
         this.canvas.addEventListener('mouseleave', () => { this.isDragging = false; });
+
+        // Double-click empty space to create an item at that point in time
+        this.canvas.addEventListener('dblclick', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            if (this.data.hitTest(x, y)) return;
+
+            this.isDragging = false;
+            this.openItemModal({ prefillDate: this.dateAtX(x) });
+        });
 
         window.addEventListener('resize', () => {
             this.renderer.setupCanvas();
@@ -532,7 +543,14 @@ export class Timeline {
     // ── Edit Modal ──────────────────────────────────────────────────────────────
 
     showEditModal(item) {
+        this.openItemModal({ item });
+    }
+
+    // Open the modal in edit mode (item given) or create mode (prefillDate optional).
+    openItemModal({ item = null, prefillDate = null } = {}) {
         const modal = document.getElementById('edit-modal');
+        const isEdit = !!item;
+
         const nameInput = document.getElementById('edit-name');
         const typeSelect = document.getElementById('edit-type');
         const startInput = document.getElementById('edit-start');
@@ -540,72 +558,234 @@ export class Timeline {
         const endInput = document.getElementById('edit-end');
         const notesInput = document.getElementById('edit-notes');
 
-        nameInput.value = item.name;
-        typeSelect.value = item.type;
+        document.getElementById('edit-modal-title').textContent = isEdit ? 'Edit Item' : 'Add Item';
+        document.getElementById('edit-delete-btn').hidden = !isEdit;
 
-        // Populate date fields
-        if (item.type === 'duration') {
-            startInput.value = item.startDate && item.startDate.date
-                ? item.startDate.date.toISOString().split('T')[0] : '';
-            endGroup.style.display = 'block';
-            endInput.value = item.endDate && item.endDate.date
-                ? item.endDate.date.toISOString().split('T')[0] : '';
+        if (isEdit) {
+            nameInput.value = item.name;
+            typeSelect.value = item.type;
+            if (item.type === 'duration') {
+                startInput.value = this._toDateInputValue(item.startDate);
+                endInput.value = this._toDateInputValue(item.endDate);
+            } else {
+                startInput.value = this._toDateInputValue(item.date);
+                endInput.value = '';
+            }
+            notesInput.value = item.notes || '';
         } else {
-            startInput.value = item.date && item.date.date
-                ? item.date.date.toISOString().split('T')[0] : '';
-            endGroup.style.display = 'none';
+            nameInput.value = '';
+            typeSelect.value = 'event';
+            startInput.value = prefillDate ? this._toDateInputValue({ date: prefillDate }) : '';
             endInput.value = '';
+            notesInput.value = '';
         }
 
-        notesInput.value = item.notes || '';
-
-        // Show/hide end date based on type change
+        endGroup.style.display = typeSelect.value === 'duration' ? 'block' : 'none';
         typeSelect.onchange = () => {
             endGroup.style.display = typeSelect.value === 'duration' ? 'block' : 'none';
         };
 
-        // Store editing item id
-        modal.dataset.itemId = item.id;
+        this._populateParentSelect(item);
+        this._setModalError('');
+        this._hideDeleteConfirm();
+
+        modal.dataset.itemId = isEdit ? item.id : '';
         modal.classList.add('visible');
+        nameInput.focus();
     }
 
+    // Inverse of the layout transform: x = width/2 + (dayOffset - offset) * pixelsPerDay.
+    // Returns null in deep time, where the offset exceeds what a Date can represent.
+    dateAtX(x) {
+        const dayOffset = (x - window.innerWidth / 2) / this.zoom + this.offset;
+        const time = this.centerDate.getTime() + dayOffset * MS_PER_DAY;
+        if (!isFinite(time)) return null;
+        const date = new Date(time);
+        return isNaN(date.getTime()) ? null : date;
+    }
+
+    // input[type=date] only handles years 1-9999; deep-time dates have no Date object.
+    // Must read in UTC: parseDate() turns "YYYY-MM-DD" into UTC midnight, so local
+    // accessors would report the previous day west of Greenwich.
+    _toDateInputValue(timelineDate) {
+        if (!timelineDate || !timelineDate.date) return '';
+        const d = timelineDate.date;
+        if (isNaN(d.getTime())) return '';
+        const year = d.getUTCFullYear();
+        if (year < 1 || year > 9999) return '';
+        return `${String(year).padStart(4, '0')}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+    }
+
+    // Descendants of `item` (plus itself) can't become its own parent
+    _collectDescendantIds(item, acc = new Set()) {
+        acc.add(item.id);
+        (item.children || []).forEach(child => this._collectDescendantIds(child, acc));
+        return acc;
+    }
+
+    _populateParentSelect(item) {
+        const select = document.getElementById('edit-parent');
+        const excluded = item ? this._collectDescendantIds(item) : new Set();
+
+        select.innerHTML = '';
+        const noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = '— None (top level) —';
+        select.appendChild(noneOpt);
+
+        // Walk the tree so options read in hierarchy order, indented by depth
+        const addOptions = (nodes, depth) => {
+            nodes.forEach(node => {
+                if (!excluded.has(node.id)) {
+                    const opt = document.createElement('option');
+                    opt.value = node.id;
+                    opt.textContent = `${'  '.repeat(depth)}${node.name}`;
+                    select.appendChild(opt);
+                    addOptions(node.children || [], depth + 1);
+                }
+            });
+        };
+        addOptions(this.data.items.filter(i => !i.parentId), 0);
+
+        select.value = item && item.parentId ? item.parentId : '';
+    }
+
+    _setModalError(message) {
+        const el = document.getElementById('edit-error');
+        el.textContent = message;
+        el.hidden = !message;
+    }
+
+    // Returns true on success, false if validation failed
     applyEdit() {
         const modal = document.getElementById('edit-modal');
         const itemId = modal.dataset.itemId;
-        const item = this.data.itemsById.get(itemId);
-        if (!item) return;
+        const isEdit = !!itemId;
 
-        const nameInput = document.getElementById('edit-name');
-        const typeSelect = document.getElementById('edit-type');
-        const startInput = document.getElementById('edit-start');
-        const endInput = document.getElementById('edit-end');
-        const notesInput = document.getElementById('edit-notes');
+        const name = document.getElementById('edit-name').value.trim();
+        const type = document.getElementById('edit-type').value;
+        const parentId = document.getElementById('edit-parent').value;
+        const startStr = document.getElementById('edit-start').value;
+        const endStr = document.getElementById('edit-end').value;
+        const notes = document.getElementById('edit-notes').value;
 
-        item.name = nameInput.value;
-        item.notes = notesInput.value;
+        const item = isEdit ? this.data.itemsById.get(itemId) : null;
+        if (isEdit && !item) return false;
 
-        if (typeSelect.value === 'duration') {
-            item.type = 'duration';
-            if (startInput.value) {
-                item.startDate = parseDate(startInput.value, this.centerDate);
-                item._startDateStr = startInput.value;
-            }
-            if (endInput.value) {
-                item.endDate = parseDate(endInput.value, this.centerDate);
-                item._endDateStr = endInput.value;
-            }
-            item.date = undefined;
-        } else {
-            item.type = 'event';
-            if (startInput.value) {
-                item.date = parseDate(startInput.value, this.centerDate);
-                item._startDateStr = startInput.value;
-            }
-            item.startDate = undefined;
-            item.endDate = undefined;
+        if (!name) {
+            this._setModalError('Name is required.');
+            return false;
         }
 
+        // Deep-time items have no representable date, so an empty field on edit means
+        // "unchanged" rather than "cleared". On create there's nothing to fall back to.
+        const hadDate = isEdit && (item.startDate || item.date);
+        if (!startStr && !hadDate) {
+            this._setModalError('Start date is required.');
+            return false;
+        }
+
+        if (type === 'duration' && startStr && endStr) {
+            const s = parseDate(startStr, this.centerDate);
+            const e = parseDate(endStr, this.centerDate);
+            if (s && e && e.dayOffset < s.dayOffset) {
+                this._setModalError('End date must be on or after the start date.');
+                return false;
+            }
+        }
+
+        const target = isEdit ? item : this.data.processCSVItem({
+            'item name': name,
+            'type': type,
+            'start date': startStr,
+            'end date': type === 'duration' ? endStr : '',
+            'parent item': '',
+            'notes': notes
+        }, this.centerDate);
+
+        if (!target) {
+            this._setModalError('Could not read that date.');
+            return false;
+        }
+
+        if (isEdit) {
+            target.name = name;
+            target.notes = notes;
+            if (type === 'duration') {
+                target.type = 'duration';
+                if (startStr) {
+                    target.startDate = parseDate(startStr, this.centerDate);
+                    target._startDateStr = startStr;
+                }
+                if (endStr) {
+                    target.endDate = parseDate(endStr, this.centerDate);
+                    target._endDateStr = endStr;
+                } else {
+                    target.endDate = null;
+                    target._endDateStr = '';
+                }
+                target.date = undefined;
+            } else {
+                target.type = 'event';
+                if (startStr) {
+                    target.date = parseDate(startStr, this.centerDate);
+                    target._startDateStr = startStr;
+                }
+                target.startDate = undefined;
+                target.endDate = undefined;
+            }
+        } else {
+            this.data.items.push(target);
+        }
+
+        // parentId wins over _parentName in setItems; null means top level
+        target.parentId = parentId || null;
+        delete target._parentName;
+
+        this._rebuild();
         modal.classList.remove('visible');
+        return true;
+    }
+
+    deleteCurrentItem(deleteChildren) {
+        const modal = document.getElementById('edit-modal');
+        const item = this.data.itemsById.get(modal.dataset.itemId);
+        if (!item) return false;
+
+        if (deleteChildren) {
+            const doomed = this._collectDescendantIds(item);
+            this.data.items = this.data.items.filter(i => !doomed.has(i.id));
+        } else {
+            // Promote children to the deleted item's parent so nothing is lost
+            const newParentId = item.parentId || null;
+            this.data.items.forEach(i => {
+                if (i.parentId === item.id) i.parentId = newParentId;
+            });
+            this.data.items = this.data.items.filter(i => i.id !== item.id);
+        }
+
+        this._rebuild();
+        modal.classList.remove('visible');
+        return true;
+    }
+
+    getCurrentModalItem() {
+        return this.data.itemsById.get(document.getElementById('edit-modal').dataset.itemId) || null;
+    }
+
+    // _collectDescendantIds includes the item itself
+    countDescendants(item) {
+        return this._collectDescendantIds(item).size - 1;
+    }
+
+    _hideDeleteConfirm() {
+        document.getElementById('edit-delete-confirm').hidden = true;
+        document.getElementById('edit-main-buttons').hidden = false;
+        document.getElementById('edit-delete-children').checked = false;
+    }
+
+    _rebuild() {
+        this.data.setItems(this.data.items);
         this.data.calculateLayout(this.zoom, this.offset, this.centerDate, window.innerWidth, window.innerHeight);
         this.draw();
     }

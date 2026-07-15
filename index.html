@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeTrek - Interactive Timeline</title>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body class="timeline-page">
     <div class="container">
@@ -29,6 +29,7 @@
                     <button id="clear-data-btn" class="data-menu-item data-menu-item-danger" role="menuitem">Clear Data</button>
                 </div>
             </div>
+            <button id="add-item-btn" class="today-button">+ Add Item</button>
             <button id="today-btn" class="today-button">Today</button>
         </div>
 
@@ -51,10 +52,10 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
+    <!-- Edit / Add Modal -->
     <div id="edit-modal" class="edit-modal">
         <div class="edit-modal-content">
-            <h3 class="edit-modal-title">Edit Item</h3>
+            <h3 class="edit-modal-title" id="edit-modal-title">Edit Item</h3>
             <label class="edit-label">Name
                 <input type="text" id="edit-name" class="edit-input">
             </label>
@@ -63,6 +64,9 @@
                     <option value="duration">Duration</option>
                     <option value="event">Event</option>
                 </select>
+            </label>
+            <label class="edit-label">Parent
+                <select id="edit-parent" class="edit-input"></select>
             </label>
             <label class="edit-label">Start Date
                 <input type="date" id="edit-start" class="edit-input">
@@ -75,9 +79,26 @@
             <label class="edit-label">Notes
                 <textarea id="edit-notes" class="edit-input edit-textarea" rows="2"></textarea>
             </label>
-            <div class="edit-modal-buttons">
+
+            <p class="edit-error" id="edit-error" role="alert" hidden></p>
+
+            <div class="edit-modal-buttons" id="edit-main-buttons">
+                <button id="edit-delete-btn" class="edit-btn edit-btn-danger-text">Delete</button>
+                <span class="edit-buttons-spacer"></span>
                 <button id="edit-cancel-btn" class="edit-btn edit-btn-cancel">Cancel</button>
                 <button id="edit-save-btn" class="edit-btn edit-btn-save">Save</button>
+            </div>
+
+            <div class="edit-delete-confirm" id="edit-delete-confirm" hidden>
+                <p class="edit-delete-warning" id="edit-delete-warning"></p>
+                <label class="edit-check" id="edit-delete-children-row" hidden>
+                    <input type="checkbox" id="edit-delete-children">
+                    <span id="edit-delete-children-text"></span>
+                </label>
+                <div class="edit-modal-buttons">
+                    <button id="edit-delete-cancel" class="edit-btn edit-btn-cancel">Cancel</button>
+                    <button id="edit-delete-confirm-btn" class="edit-btn edit-btn-danger">Delete</button>
+                </div>
             </div>
         </div>
     </div>
