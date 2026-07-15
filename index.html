@@ -4,13 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeTrek - Interactive Timeline</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
 </head>
-<body>
+<body class="timeline-page">
     <div class="container">
         <canvas id="timeline-canvas"></canvas>
+        <a href="projects.html" id="back-btn" class="today-button back-button">← Projects</a>
         <button id="today-btn" class="today-button">Today</button>
         <div class="scale-controls">
+            <input type="file" id="csv-upload" accept=".csv" style="display: none;">
+            <input type="file" id="json-upload" accept=".json" style="display: none;">
+            <button id="upload-btn" class="data-button">Import CSV</button>
+            <button id="import-json-btn" class="data-button">Import JSON</button>
+            <button id="export-btn" class="data-button">Export JSON</button>
+            <button id="sample-data-btn" class="data-button">Load Sample Data</button>
+            <button id="clear-data-btn" class="data-button">Clear Data</button>
+            <span class="scale-divider"></span>
             <button class="scale-btn" data-scale="hour">Hour</button>
             <button class="scale-btn" data-scale="day">Day</button>
             <button class="scale-btn" data-scale="week">Week</button>
@@ -26,12 +35,6 @@
             <button class="scale-btn" data-scale="ten-million">10M Years</button>
             <button class="scale-btn" data-scale="hundred-million">100M Years</button>
             <button class="scale-btn" data-scale="billion">Billion Years</button>
-        </div>
-        <div class="data-controls">
-            <input type="file" id="csv-upload" accept=".csv" style="display: none;">
-            <button id="upload-btn" class="data-button">Upload CSV</button>
-            <button id="sample-data-btn" class="data-button">Load Sample Data</button>
-            <button id="clear-data-btn" class="data-button">Clear Data</button>
         </div>
     </div>
 

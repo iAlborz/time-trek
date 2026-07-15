@@ -65,20 +65,22 @@ export class TimelineData {
         return result;
     }
 
+    _generateId() {
+        return crypto.randomUUID ? crypto.randomUUID()
+            : Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    }
+
     processCSVItem(csvItem, referenceDate) {
         const name = csvItem['item name'];
         const type = csvItem['type'].toLowerCase();
         if (!name || !type) return null;
 
-        const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-
         const item = {
-            id,
+            id: this._generateId(),
             name,
             type,
-            parentId: csvItem['parent item']
-                ? csvItem['parent item'].toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
-                : null,
+            _parentName: csvItem['parent item'] || null,  // resolved in setItems
+            parentId: null,
             notes: csvItem['notes'] || '',
             level: 0,
             children: []
@@ -86,17 +88,83 @@ export class TimelineData {
 
         if (type === 'duration') {
             item.startDate = parseDate(csvItem['start date'], referenceDate);
+            item._startDateStr = csvItem['start date'] || '';
             item.endDate = csvItem['end date'] ? parseDate(csvItem['end date'], referenceDate) : null;
+            item._endDateStr = csvItem['end date'] || '';
             if (!item.startDate) {
                 console.warn(`Invalid start date for duration item: ${name}`);
                 return null;
             }
         } else if (type === 'event') {
             item.date = parseDate(csvItem['start date'], referenceDate);
+            item._startDateStr = csvItem['start date'] || '';
             if (!item.date) {
                 console.warn(`Invalid date for event item: ${name}`);
                 return null;
             }
+        }
+
+        return item;
+    }
+
+    // ── Serialization ────────────────────────────────────────────────────────────
+
+    loadFromSerializedItems(storedItems, referenceDate) {
+        const items = [];
+        for (const stored of storedItems) {
+            const csvItem = {
+                'item name': stored.name,
+                'type': stored.type,
+                'start date': stored.startDate || '',
+                'end date': stored.endDate || '',
+                'parent item': stored.parentName || '',
+                'notes': stored.notes || ''
+            };
+
+            // Handle __offset: deep-time format
+            const processedItem = this._processSerializedItem(csvItem, referenceDate);
+            if (processedItem) items.push(processedItem);
+        }
+        this.setItems(items);
+        return items;
+    }
+
+    _processSerializedItem(csvItem, referenceDate) {
+        const name = csvItem['item name'];
+        const type = csvItem['type'].toLowerCase();
+        if (!name || !type) return null;
+
+        const item = {
+            id: this._generateId(),
+            name,
+            type,
+            _parentName: csvItem['parent item'] || null,  // resolved in setItems
+            parentId: null,
+            notes: csvItem['notes'] || '',
+            level: 0,
+            children: []
+        };
+
+        const parseStoredDate = (dateStr) => {
+            if (!dateStr) return null;
+            // Handle __offset: deep-time format
+            if (dateStr.startsWith('__offset:')) {
+                const offset = parseFloat(dateStr.slice(9));
+                return { date: null, dayOffset: offset };
+            }
+            return parseDate(dateStr, referenceDate);
+        };
+
+        if (type === 'duration') {
+            item.startDate = parseStoredDate(csvItem['start date']);
+            item._startDateStr = csvItem['start date'] || '';
+            item.endDate = parseStoredDate(csvItem['end date']);
+            item._endDateStr = csvItem['end date'] || '';
+            if (!item.startDate) return null;
+        } else if (type === 'event') {
+            item.date = parseStoredDate(csvItem['start date']);
+            item._startDateStr = csvItem['start date'] || '';
+            if (!item.date) return null;
         }
 
         return item;
@@ -108,17 +176,36 @@ export class TimelineData {
         this.items = items;
         this.itemsById.clear();
 
+        // Build ID map
         items.forEach(item => this.itemsById.set(item.id, item));
 
+        // Build name→item map for parent resolution
+        const byName = new Map();
+        items.forEach(item => byName.set(item.name, item));
+
+        // Resolve parent relationships
         items.forEach(item => {
             item.children = [];
+
+            // If _parentName is set (from CSV/serialized), resolve to parentId
+            if (item._parentName && !item.parentId) {
+                const parent = byName.get(item._parentName);
+                if (parent) {
+                    item.parentId = parent.id;
+                } else {
+                    console.warn(`Parent not found for item: ${item.name}, looking for: "${item._parentName}"`);
+                    item._parentName = null;
+                }
+            }
+            delete item._parentName;  // clean up transient field
+
             if (item.parentId) {
                 const parent = this.itemsById.get(item.parentId);
                 if (parent) {
                     parent.children.push(item);
                     item.level = parent.level + 1;
                 } else {
-                    console.warn(`Parent not found for item: ${item.name}, looking for parent ID: ${item.parentId}`);
+                    console.warn(`Parent ID not found for item: ${item.name}`);
                     item.parentId = null;
                     item.level = 0;
                 }

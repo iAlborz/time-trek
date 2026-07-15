@@ -1,7 +1,8 @@
-// main.js — Bootstrap: DOMContentLoaded, button wiring, sample data
+// main.js — Bootstrap: DOMContentLoaded, button wiring, sample data, project integration
 
 import { Timeline } from './Timeline.js';
 import { TimeScale, DEFAULT_SCALES } from './TimeScale.js';
+import { ProjectManager } from './ProjectManager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('timeline-canvas');
@@ -10,40 +11,107 @@ document.addEventListener('DOMContentLoaded', () => {
     // Register all built-in scales
     DEFAULT_SCALES.forEach(scale => timeline.registerScale(scale));
 
-    // Expose registerScale for open-source extensibility
-    // Usage: window.timeline.registerScale(new TimeScale({ ... }))
+    // Expose for extensibility
     window.timeline = timeline;
     window.TimeScale = TimeScale;
 
-    // Start rendering
-    timeline.start();
+    // ── Project Loading ─────────────────────────────────────────────────────────
 
-    // ── Today Button ───────────────────────────────────────────────────────────
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get('project');
+    let currentProjectId = projectId;
+
+    if (projectId) {
+        const project = ProjectManager.loadProject(projectId);
+        if (project) {
+            document.title = `TimeTrek - ${project.name}`;
+
+            // Start rendering first
+            timeline.start();
+
+            // Then load items and view state
+            if (project.items && project.items.length > 0) {
+                timeline.loadSerializedItems(project.items);
+            }
+            if (project.viewState) {
+                timeline.setViewState(project.viewState);
+            }
+        } else {
+            timeline.start();
+        }
+    } else {
+        // No project context — start fresh (direct access to index.html)
+        timeline.start();
+    }
+
+    // ── Auto-Save (debounced) ───────────────────────────────────────────────────
+
+    let saveTimeout = null;
+
+    function saveCurrentProject() {
+        if (!currentProjectId) return;
+        const project = ProjectManager.loadProject(currentProjectId);
+        if (!project) return;
+
+        project.items = ProjectManager.serializeItems(
+            timeline.data.items,
+            timeline.data.itemsById
+        );
+        project.viewState = timeline.getViewState();
+        ProjectManager.saveProject(project);
+    }
+
+    function debouncedSave() {
+        if (!currentProjectId) return;
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(saveCurrentProject, 500);
+    }
+
+    // Hook into zoom/pan end via the existing animation callback
+    const originalOnFrame = timeline._onAnimationFrame.bind(timeline);
+    timeline._onAnimationFrame = (update) => {
+        originalOnFrame(update);
+        debouncedSave();
+    };
+
+    // ── Back Button (save before navigating) ────────────────────────────────────
+
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            saveCurrentProject();
+            window.location.href = 'projects.html';
+        });
+    }
+
+    // ── Today Button ────────────────────────────────────────────────────────────
     document.getElementById('today-btn').addEventListener('click', () => {
         timeline.goToToday();
     });
 
-    // ── Scale Buttons ──────────────────────────────────────────────────────────
+    // ── Scale Buttons ───────────────────────────────────────────────────────────
     document.querySelectorAll('.scale-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             timeline.setScaleZoom(btn.dataset.scale);
         });
     });
 
-    // ── Edit Modal Buttons ─────────────────────────────────────────────────────
+    // ── Edit Modal Buttons ──────────────────────────────────────────────────────
     document.getElementById('edit-save-btn').addEventListener('click', () => {
         timeline.applyEdit();
+        debouncedSave();
     });
     document.getElementById('edit-cancel-btn').addEventListener('click', () => {
         timeline.closeEditModal();
     });
-    // Close on backdrop click
     document.getElementById('edit-modal').addEventListener('click', (e) => {
         if (e.target.id === 'edit-modal') timeline.closeEditModal();
     });
 
-    // ── Data Controls ──────────────────────────────────────────────────────────
+    // ── Data Controls ───────────────────────────────────────────────────────────
     const csvUpload = document.getElementById('csv-upload');
+    const jsonUpload = document.getElementById('json-upload');
 
     document.getElementById('upload-btn').addEventListener('click', () => {
         csvUpload.click();
@@ -51,11 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     csvUpload.addEventListener('change', (e) => {
         const file = e.target.files[0];
-        if (file && file.type === 'text/csv') {
+        if (file && (file.type === 'text/csv' || file.name.endsWith('.csv'))) {
             const reader = new FileReader();
             reader.onload = (ev) => {
                 try {
                     timeline.parseCSVData(ev.target.result);
+                    debouncedSave();
                     console.log('CSV data loaded successfully');
                 } catch (error) {
                     alert('Error parsing CSV: ' + error.message);
@@ -65,26 +134,96 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             alert('Please select a valid CSV file');
         }
+        csvUpload.value = '';
     });
 
-    // ── Sample Data ────────────────────────────────────────────────────────────
+    // ── Import JSON (into current project) ──────────────────────────────────────
+
+    document.getElementById('import-json-btn').addEventListener('click', () => {
+        jsonUpload.click();
+    });
+
+    jsonUpload.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (data._format !== 'timetrek-v1') {
+                    throw new Error('Not a valid TimeTrek JSON file');
+                }
+                if (data.items && data.items.length > 0) {
+                    timeline.loadSerializedItems(data.items);
+                }
+                if (data.viewState) {
+                    timeline.setViewState(data.viewState);
+                }
+                debouncedSave();
+                console.log('JSON data imported successfully');
+            } catch (error) {
+                alert('Error importing JSON: ' + error.message);
+            }
+        };
+        reader.readAsText(file);
+        jsonUpload.value = '';
+    });
+
+    // ── Export JSON ──────────────────────────────────────────────────────────────
+
+    document.getElementById('export-btn').addEventListener('click', () => {
+        // Build a project object for export
+        const items = ProjectManager.serializeItems(
+            timeline.data.items,
+            timeline.data.itemsById
+        );
+        const viewState = timeline.getViewState();
+
+        let project;
+        if (currentProjectId) {
+            project = ProjectManager.loadProject(currentProjectId);
+            if (project) {
+                project.items = items;
+                project.viewState = viewState;
+            }
+        }
+
+        if (!project) {
+            project = {
+                id: 'export',
+                name: 'TimeTrek Export',
+                description: '',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                items,
+                viewState
+            };
+        }
+
+        ProjectManager.downloadJSON(project);
+    });
+
+    // ── Sample Data ─────────────────────────────────────────────────────────────
     document.getElementById('sample-data-btn').addEventListener('click', () => {
         try {
             timeline.parseCSVData(SAMPLE_CSV);
+            debouncedSave();
             console.log('Sample data loaded successfully');
         } catch (error) {
             alert('Error loading sample data: ' + error.message);
         }
     });
 
-    // ── Clear Data ─────────────────────────────────────────────────────────────
+    // ── Clear Data ──────────────────────────────────────────────────────────────
     document.getElementById('clear-data-btn').addEventListener('click', () => {
         timeline.setTimelineItems([]);
+        debouncedSave();
         console.log('Timeline data cleared');
     });
 });
 
-// ── Sample CSV Data ────────────────────────────────────────────────────────────
+// ── Sample CSV Data ─────────────────────────────────────────────────────────────
 
 const SAMPLE_CSV = `Item Name,Type,Start Date,End Date,Parent Item,Notes
 Life of Jack,duration,1980-01-01,2022-06-02,,Full biography of Jack Thompson

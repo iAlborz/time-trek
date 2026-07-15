@@ -72,6 +72,26 @@ export class Timeline {
         return bestScale;
     }
 
+    /**
+     * Calculate a continuous blend factor (0–1) for a scale based on current zoom.
+     * Instead of a hard cutoff, markers fade in/out over a zoom range.
+     *   - markerCount 8–30: fully visible (1.0)
+     *   - markerCount 4–8:  fading in as we zoom in (0→1)
+     *   - markerCount 30–60: fading out as we zoom out (1→0)
+     *   - outside those ranges: invisible (0)
+     */
+    getScaleBlend(scale) {
+        const pixelsPerDay = this.zoom;
+        const canvasWidth = window.innerWidth;
+        const visibleDays = canvasWidth / pixelsPerDay;
+        const count = visibleDays / scale.days;
+
+        if (count >= 8 && count <= 30) return 1;
+        if (count > 4 && count < 8) return (count - 4) / 4;      // fade in zone
+        if (count > 30 && count < 60) return 1 - (count - 30) / 30; // fade out zone
+        return 0;
+    }
+
     getSmallerTimeScale(currentScale) {
         const idx = this.scales.findIndex(s => s.unit === currentScale.unit);
         return idx > 0 ? this.scales[idx - 1] : null;
@@ -207,7 +227,7 @@ export class Timeline {
     // ── Marker Generation ──────────────────────────────────────────────────────
 
     getMarkers() {
-        const scale = this.getTimeScale();
+        const primaryScale = this.getTimeScale();
         const markers = [];
         const canvasWidth = window.innerWidth;
         const pixelsPerDay = this.zoom;
@@ -224,58 +244,40 @@ export class Timeline {
         const endDate = new Date(endTime);
         const currentMarkerKeys = new Set();
 
-        // Primary markers
-        this._generateMarkersForScale(scale, startDate, endDate, markers, currentMarkerKeys, 'primary');
+        // Gather all scales that have any visibility at the current zoom
+        const primaryIdx = this.scales.findIndex(s => s.unit === primaryScale.unit);
+        const visibleScales = [];
 
-        // Secondary markers (smaller scale)
-        const secondaryScale = this.getSmallerTimeScale(scale);
-        if (secondaryScale) {
-            this._generateMarkersForScale(secondaryScale, startDate, endDate, markers, currentMarkerKeys, 'secondary');
+        for (let i = 0; i < this.scales.length; i++) {
+            const scale = this.scales[i];
+            const blend = this.getScaleBlend(scale);
+            if (blend <= 0) continue;
+
+            // Determine marker type based on relationship to primary scale
+            let markerType;
+            if (i < primaryIdx) markerType = 'secondary';
+            else if (i > primaryIdx) markerType = 'tertiary';
+            else markerType = 'primary';
+
+            visibleScales.push({ scale, blend, markerType });
         }
 
-        // Tertiary markers (larger scale)
-        const tertiaryScale = this.getLargerTimeScale(scale);
-        if (tertiaryScale) {
-            this._generateMarkersForScale(tertiaryScale, startDate, endDate, markers, currentMarkerKeys, 'tertiary');
-        }
-
-        // Update marker animations
-        this.animator.updateMarkerAnimations(currentMarkerKeys);
-
-        // Add fading-out markers
-        for (const [key, animState] of this.animator.markerAnimations) {
-            if (!currentMarkerKeys.has(key) && animState.scale > 0) {
-                const parts = key.split('-');
-                const unit = parts[0];
-                // Find the scale for this unit
-                const fadeScale = this.scales.find(s => s.unit === unit) || scale;
-                const timestamp = parseInt(parts[parts.length - 1]);
-                const date = new Date(timestamp);
-                const dayOffset = (date.getTime() - this.centerDate.getTime()) / (24 * 60 * 60 * 1000);
-                const x = canvasWidth / 2 + (dayOffset - this.offset) * pixelsPerDay;
-
-                markers.push({
-                    x,
-                    date,
-                    scale: fadeScale,
-                    key,
-                    animationState: animState,
-                    markerType: animState.originalMarkerType || 'primary'
-                });
-            }
+        // Generate markers for all visible scales with their blend factors
+        for (const { scale, blend, markerType } of visibleScales) {
+            this._generateMarkersForScale(scale, startDate, endDate, markers, currentMarkerKeys, markerType, blend);
         }
 
         return markers;
     }
 
-    _generateMarkersForScale(scale, startDate, endDate, markers, currentMarkerKeys, markerType) {
+    _generateMarkersForScale(scale, startDate, endDate, markers, currentMarkerKeys, markerType, blend = 1) {
         const baseCenterYear = this.centerDate.getFullYear();
         const offsetYears = this.offset / 365.25;
         const currentYear = baseCenterYear + offsetYears;
         const isExtremeRange = Math.abs(currentYear) > 250000;
 
         if (isExtremeRange || scale.isLargeScale) {
-            this._generateLargeScaleMarkers(scale, startDate, endDate, markers, currentMarkerKeys, markerType);
+            this._generateLargeScaleMarkers(scale, startDate, endDate, markers, currentMarkerKeys, markerType, blend);
             return;
         }
 
@@ -291,14 +293,13 @@ export class Timeline {
             if (x >= -100 && x <= canvasWidth + 100) {
                 const markerKey = `${scale.unit}-${currentDate.getTime()}`;
                 currentMarkerKeys.add(markerKey);
-                const animState = this.animator.getMarkerAnimationState(markerKey, true, markerType, this.isInitialLoad);
 
                 markers.push({
                     x,
                     date: new Date(currentDate),
                     scale,
                     key: markerKey,
-                    animationState: animState,
+                    animationState: { opacity: blend, scale: blend },
                     markerType
                 });
             }
@@ -306,7 +307,7 @@ export class Timeline {
         }
     }
 
-    _generateLargeScaleMarkers(scale, startDate, endDate, markers, currentMarkerKeys, markerType) {
+    _generateLargeScaleMarkers(scale, startDate, endDate, markers, currentMarkerKeys, markerType, blend = 1) {
         const canvasWidth = window.innerWidth;
         const pixelsPerDay = this.zoom;
         const baseCenterYear = this.centerDate.getFullYear();
@@ -344,11 +345,10 @@ export class Timeline {
 
                     const markerKey = `${scale.unit}-${days}`;
                     currentMarkerKeys.add(markerKey);
-                    const animState = this.animator.getMarkerAnimationState(markerKey, true, markerType, this.isInitialLoad);
 
                     markers.push({
                         x, date: markerDate, scale, key: markerKey,
-                        animationState: animState, markerType, actualYear
+                        animationState: { opacity: blend, scale: blend }, markerType, actualYear
                     });
                 }
             }
@@ -373,11 +373,10 @@ export class Timeline {
                         const markerDate = new Date(2000, month, 1);
                         const markerKey = `${scale.unit}-${year}-${month}`;
                         currentMarkerKeys.add(markerKey);
-                        const animState = this.animator.getMarkerAnimationState(markerKey, true, markerType, this.isInitialLoad);
 
                         markers.push({
                             x, date: markerDate, scale, key: markerKey,
-                            animationState: animState, markerType, actualYear: year
+                            animationState: { opacity: blend, scale: blend }, markerType, actualYear: year
                         });
                     }
                 }
@@ -404,11 +403,10 @@ export class Timeline {
                         const markerDate = new Date(2000, month, 1);
                         const markerKey = `${scale.unit}-${year}-Q${q + 1}`;
                         currentMarkerKeys.add(markerKey);
-                        const animState = this.animator.getMarkerAnimationState(markerKey, true, markerType, this.isInitialLoad);
 
                         markers.push({
                             x, date: markerDate, scale, key: markerKey,
-                            animationState: animState, markerType, actualYear: year
+                            animationState: { opacity: blend, scale: blend }, markerType, actualYear: year
                         });
                     }
                 }
@@ -442,11 +440,10 @@ export class Timeline {
 
                 const markerKey = `${scale.unit}-${year}`;
                 currentMarkerKeys.add(markerKey);
-                const animState = this.animator.getMarkerAnimationState(markerKey, true, markerType, this.isInitialLoad);
 
                 markers.push({
                     x, date: markerDate, scale, key: markerKey,
-                    animationState: animState, markerType, actualYear: year
+                    animationState: { opacity: blend, scale: blend }, markerType, actualYear: year
                 });
             }
         }
@@ -465,6 +462,7 @@ export class Timeline {
             centerDate: this.centerDate,
             markers,
             currentScale,
+            scales: this.scales,
             formattedCenterDate,
             bigBangLimitDays: this.bigBangLimitDays,
             itemLayout: this.data.itemLayout,
@@ -590,15 +588,18 @@ export class Timeline {
             item.type = 'duration';
             if (startInput.value) {
                 item.startDate = parseDate(startInput.value, this.centerDate);
+                item._startDateStr = startInput.value;
             }
             if (endInput.value) {
                 item.endDate = parseDate(endInput.value, this.centerDate);
+                item._endDateStr = endInput.value;
             }
             item.date = undefined;
         } else {
             item.type = 'event';
             if (startInput.value) {
                 item.date = parseDate(startInput.value, this.centerDate);
+                item._startDateStr = startInput.value;
             }
             item.startDate = undefined;
             item.endDate = undefined;
@@ -623,6 +624,39 @@ export class Timeline {
 
     setTimelineItems(items) {
         this.data.setItems(items);
+        this.data.calculateLayout(this.zoom, this.offset, this.centerDate, window.innerWidth, window.innerHeight);
+        this.draw();
+    }
+
+    // ── View State (for project save/restore) ─────────────────────────────────
+
+    getViewState() {
+        return {
+            zoom: this.zoom,
+            offset: this.offset,
+            expandedItems: Array.from(this.data.expandedItems)
+        };
+    }
+
+    setViewState(state) {
+        if (!state) return;
+        if (state.zoom !== undefined) {
+            this.zoom = state.zoom;
+            this.targetZoom = state.zoom;
+        }
+        if (state.offset !== undefined) {
+            this.offset = state.offset;
+            this.targetOffset = state.offset;
+        }
+        if (state.expandedItems) {
+            this.data.expandedItems = new Set(state.expandedItems);
+        }
+        this.data.calculateLayout(this.zoom, this.offset, this.centerDate, window.innerWidth, window.innerHeight);
+        this.draw();
+    }
+
+    loadSerializedItems(storedItems) {
+        this.data.loadFromSerializedItems(storedItems, this.centerDate);
         this.data.calculateLayout(this.zoom, this.offset, this.centerDate, window.innerWidth, window.innerHeight);
         this.draw();
     }

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeTrek - Projects</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body class="projects-page">
+    <div class="projects-container">
+        <header class="projects-header">
+            <h1 class="projects-title">TimeTrek</h1>
+            <p class="projects-subtitle">Your timelines, organized.</p>
+        </header>
+
+        <div class="projects-actions">
+            <button id="new-project-btn" class="data-button">New Project</button>
+            <button id="import-project-btn" class="data-button">Import JSON</button>
+            <input type="file" id="json-import" accept=".json" style="display: none;">
+        </div>
+
+        <div id="project-grid" class="project-grid"></div>
+
+        <div id="empty-state" class="projects-empty" style="display: none;">
+            <p>No projects yet. Create one or import a .timetrek.json file to get started.</p>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div id="new-project-modal" class="edit-modal">
+        <div class="edit-modal-content">
+            <h3 class="edit-modal-title">New Project</h3>
+            <label class="edit-label">Project Name
+                <input type="text" id="new-project-name" class="edit-input" placeholder="My Timeline">
+            </label>
+            <label class="edit-label">Description (optional)
+                <textarea id="new-project-desc" class="edit-input edit-textarea" rows="2" placeholder="A brief description..."></textarea>
+            </label>
+            <div class="edit-modal-buttons">
+                <button id="new-project-cancel" class="edit-btn edit-btn-cancel">Cancel</button>
+                <button id="new-project-create" class="edit-btn edit-btn-save">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/projects-main.js"></script>
+</body>
+</html>
