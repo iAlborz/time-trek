@@ -83,7 +83,7 @@ Deep-time values are positioned by day offset from today rather than by a real `
 ```
 index.html          Timeline view
 projects.html       Project list (entry point)
-style.css
+style.css           Design tokens (:root) + all UI styling
 js/
   main.js           Timeline bootstrap, button wiring, sample data
   projects-main.js  Projects page bootstrap
@@ -101,6 +101,8 @@ js/
 ## Contributing
 
 Issues and pull requests are welcome. There's no test suite or build tooling — verify changes by serving the app locally and exercising the flow you touched.
+
+Colours and the font stack live as custom properties in the `:root` block at the top of `style.css` — restyle there rather than editing rules individually. The button fill tokens (`--color-primary`, `--color-secondary`) are deliberately darker than `--color-brand` so white labels clear WCAG AA contrast; `--color-brand` is for display type only. The canvas renderer in `js/TimelineRenderer.js` still has its own hardcoded palette and doesn't read these tokens yet.
 
 ## License
 

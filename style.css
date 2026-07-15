@@ -1,3 +1,37 @@
+:root {
+    /* Brand — display type and timeline accents */
+    --color-brand: #FF6B6B;
+
+    /* Button fills — darker than the brand so white labels clear WCAG AA */
+    --color-primary: #CC3B3B;         /* 4.93:1 with white */
+    --color-primary-hover: #B93030;
+    --color-secondary: #0F7A70;       /* 5.20:1 with white */
+    --color-secondary-hover: #0C635B;
+
+    /* Text — all AA on white */
+    --color-text: #333;
+    --color-text-muted: #5C6470;      /* 5.98:1 */
+    --color-text-subtle: #6E7681;     /* 4.59:1 */
+    --color-text-on-fill: #fff;
+
+    /* Surfaces */
+    --color-surface: #fff;
+    --color-surface-sunken: #f8f9fa;
+    --color-surface-muted: #f1f3f5;
+    --color-surface-hover: #e9ecef;
+    --color-border: #dee2e6;
+    --color-border-subtle: #eee;
+
+    /* Danger */
+    --color-danger: #C0392B;          /* 5.44:1 */
+    --color-danger-surface: #ffe0e0;
+
+    /* Focus */
+    --color-focus: #CC3B3B;
+
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,8 +39,8 @@
 }
 
 body {
-    background-color: white;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: var(--color-surface);
+    font-family: var(--font-sans);
 }
 
 body.timeline-page {
@@ -15,6 +49,11 @@ body.timeline-page {
 
 body.projects-page {
     overflow: auto;
+}
+
+:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
 }
 
 .container {
@@ -34,33 +73,40 @@ body.projects-page {
     cursor: grabbing;
 }
 
-.today-button {
-    position: absolute;
+/* Fixed, not absolute — .container is a flex parent that can exceed the viewport */
+.top-controls {
+    position: fixed;
     top: 20px;
     right: 20px;
-    background-color: #FF6B6B;
-    color: white;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    z-index: 100;
+}
+
+.today-button {
+    background-color: var(--color-primary);
+    color: var(--color-text-on-fill);
     border: none;
     padding: 10px 20px;
     border-radius: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-    z-index: 100;
+    box-shadow: 0 2px 8px rgba(204, 59, 59, 0.3);
 }
 
 .today-button:hover {
-    background-color: #FF5252;
+    background-color: var(--color-primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+    box-shadow: 0 4px 12px rgba(204, 59, 59, 0.4);
 }
 
 .today-button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(255, 107, 107, 0.3);
+    box-shadow: 0 2px 6px rgba(204, 59, 59, 0.3);
 }
 
 .scale-controls {
@@ -80,20 +126,13 @@ body.projects-page {
     z-index: 100;
 }
 
-.scale-divider {
-    width: 1px;
-    align-self: stretch;
-    background-color: #dee2e6;
-    margin: 0 4px;
-}
-
 .scale-btn {
-    background-color: #f8f9fa;
-    color: #495057;
-    border: 1px solid #dee2e6;
+    background-color: var(--color-surface-sunken);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
     padding: 8px 16px;
     border-radius: 15px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--font-sans);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
@@ -102,7 +141,7 @@ body.projects-page {
 }
 
 .scale-btn:hover {
-    background-color: #e9ecef;
+    background-color: var(--color-surface-hover);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -113,35 +152,103 @@ body.projects-page {
 }
 
 .scale-btn.active {
-    background-color: #FF6B6B;
-    color: white;
-    border-color: #FF6B6B;
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+    background-color: var(--color-primary);
+    color: var(--color-text-on-fill);
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(204, 59, 59, 0.3);
 }
 
 .data-button {
-    background-color: #4ECDC4;
-    color: white;
+    background-color: var(--color-secondary);
+    color: var(--color-text-on-fill);
     border: none;
     padding: 10px 16px;
     border-radius: 8px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--font-sans);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+    box-shadow: 0 2px 8px rgba(15, 122, 112, 0.3);
 }
 
 .data-button:hover {
-    background-color: #45B7AA;
+    background-color: var(--color-secondary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
+    box-shadow: 0 4px 12px rgba(15, 122, 112, 0.4);
 }
 
 .data-button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(78, 205, 196, 0.3);
+    box-shadow: 0 2px 6px rgba(15, 122, 112, 0.3);
+}
+
+/* ── Data Menu (timeline page) ─────────────────────────────────────────────── */
+
+.data-menu {
+    position: relative;
+}
+
+.data-menu-trigger {
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.data-menu-caret {
+    font-size: 10px;
+    margin-left: 4px;
+}
+
+.data-menu-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 190px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+    padding: 6px;
+}
+
+.data-menu.open .data-menu-panel {
+    display: block;
+}
+
+.data-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.data-menu-item:hover {
+    background-color: var(--color-surface-muted);
+}
+
+.data-menu-separator {
+    border: none;
+    border-top: 1px solid var(--color-border-subtle);
+    margin: 6px 4px;
+}
+
+.data-menu-item-danger {
+    color: var(--color-danger);
+}
+
+.data-menu-item-danger:hover {
+    background-color: var(--color-danger-surface);
 }
 
 /* Edit Modal */
@@ -163,7 +270,7 @@ body.projects-page {
 }
 
 .edit-modal-content {
-    background: white;
+    background: var(--color-surface);
     border-radius: 14px;
     padding: 24px;
     width: 340px;
@@ -175,14 +282,14 @@ body.projects-page {
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 16px;
-    color: #333;
+    color: var(--color-text);
 }
 
 .edit-label {
     display: block;
     font-size: 12px;
     font-weight: 500;
-    color: #666;
+    color: var(--color-text-muted);
     margin-bottom: 12px;
 }
 
@@ -191,17 +298,16 @@ body.projects-page {
     width: 100%;
     margin-top: 4px;
     padding: 8px 10px;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     font-family: inherit;
     font-size: 13px;
-    color: #333;
-    outline: none;
+    color: var(--color-text);
     transition: border-color 0.2s;
 }
 
-.edit-input:focus {
-    border-color: #FF6B6B;
+.edit-input:focus-visible {
+    border-color: var(--color-primary);
 }
 
 .edit-textarea {
@@ -228,21 +334,21 @@ body.projects-page {
 }
 
 .edit-btn-cancel {
-    background-color: #f1f3f5;
-    color: #495057;
+    background-color: var(--color-surface-muted);
+    color: var(--color-text-muted);
 }
 
 .edit-btn-cancel:hover {
-    background-color: #e9ecef;
+    background-color: var(--color-surface-hover);
 }
 
 .edit-btn-save {
-    background-color: #FF6B6B;
-    color: white;
+    background-color: var(--color-primary);
+    color: var(--color-text-on-fill);
 }
 
 .edit-btn-save:hover {
-    background-color: #FF5252;
+    background-color: var(--color-primary-hover);
 }
 
 /* ── Projects Page ──────────────────────────────────────────────────────────── */
@@ -261,13 +367,13 @@ body.projects-page {
 .projects-title {
     font-size: 32px;
     font-weight: 700;
-    color: #FF6B6B;
+    color: var(--color-brand);
     letter-spacing: -0.5px;
 }
 
 .projects-subtitle {
     font-size: 14px;
-    color: #999;
+    color: var(--color-text-subtle);
     margin-top: 6px;
 }
 
@@ -285,8 +391,10 @@ body.projects-page {
 }
 
 .project-card {
-    background: white;
-    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
     border-radius: 14px;
     padding: 20px;
     cursor: pointer;
@@ -302,23 +410,26 @@ body.projects-page {
 .project-card-title {
     font-size: 16px;
     font-weight: 600;
-    color: #333;
+    color: var(--color-text);
     margin-bottom: 4px;
 }
 
 .project-card-desc {
     font-size: 13px;
-    color: #888;
+    color: var(--color-text-muted);
     margin-top: 4px;
     line-height: 1.4;
 }
 
+/* margin-top:auto bottom-anchors the meta+actions block so it lines up
+   across cards whose descriptions run to different heights */
 .project-card-meta {
     display: flex;
     gap: 16px;
     font-size: 11px;
-    color: #aaa;
-    margin-top: 14px;
+    color: var(--color-text-subtle);
+    margin-top: auto;
+    padding-top: 14px;
 }
 
 .project-card-actions {
@@ -328,8 +439,8 @@ body.projects-page {
 }
 
 .project-card-btn {
-    background-color: #f1f3f5;
-    color: #666;
+    background-color: var(--color-surface-muted);
+    color: var(--color-text-muted);
     border: none;
     padding: 5px 12px;
     border-radius: 6px;
@@ -341,18 +452,18 @@ body.projects-page {
 }
 
 .project-card-btn:hover {
-    background-color: #e9ecef;
-    color: #333;
+    background-color: var(--color-surface-hover);
+    color: var(--color-text);
 }
 
 .project-card-delete:hover {
-    background-color: #ffe0e0;
-    color: #d33;
+    background-color: var(--color-danger-surface);
+    color: var(--color-danger);
 }
 
 .projects-empty {
     text-align: center;
-    color: #bbb;
+    color: var(--color-text-subtle);
     font-size: 14px;
     padding: 60px 20px;
 }
@@ -360,19 +471,27 @@ body.projects-page {
 /* ── Back Button (timeline page) ──────────────────────────────────────────── */
 
 .back-button {
-    position: absolute;
+    position: fixed;
     top: 20px;
     left: 20px;
-    right: auto;
-    background-color: #4ECDC4;
-    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+    background-color: var(--color-secondary);
+    color: var(--color-text-on-fill);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(15, 122, 112, 0.3);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    transition: all 0.2s ease;
+    z-index: 100;
 }
 
 .back-button:hover {
-    background-color: #45B7AA;
-    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
+    background-color: var(--color-secondary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 122, 112, 0.4);
 }

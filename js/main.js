@@ -109,6 +109,35 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.id === 'edit-modal') timeline.closeEditModal();
     });
 
+    // ── Data Menu ───────────────────────────────────────────────────────────────
+
+    const dataMenu = document.getElementById('data-menu');
+    const dataMenuBtn = document.getElementById('data-menu-btn');
+
+    function setDataMenuOpen(open) {
+        dataMenu.classList.toggle('open', open);
+        dataMenuBtn.setAttribute('aria-expanded', String(open));
+    }
+
+    dataMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setDataMenuOpen(!dataMenu.classList.contains('open'));
+    });
+
+    dataMenu.querySelectorAll('.data-menu-item').forEach(item => {
+        item.addEventListener('click', () => setDataMenuOpen(false));
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!dataMenu.contains(e.target)) setDataMenuOpen(false);
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape' || !dataMenu.classList.contains('open')) return;
+        setDataMenuOpen(false);
+        dataMenuBtn.focus();
+    });
+
     // ── Data Controls ───────────────────────────────────────────────────────────
     const csvUpload = document.getElementById('csv-upload');
     const jsonUpload = document.getElementById('json-upload');

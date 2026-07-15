@@ -4,22 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeTrek - Interactive Timeline</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body class="timeline-page">
     <div class="container">
         <canvas id="timeline-canvas"></canvas>
-        <a href="projects.html" id="back-btn" class="today-button back-button">← Projects</a>
-        <button id="today-btn" class="today-button">Today</button>
+        <a href="projects.html" id="back-btn" class="back-button">← Projects</a>
+
+        <input type="file" id="csv-upload" accept=".csv" style="display: none;">
+        <input type="file" id="json-upload" accept=".json" style="display: none;">
+
+        <div class="top-controls">
+            <div class="data-menu" id="data-menu">
+                <button id="data-menu-btn" class="data-button data-menu-trigger"
+                        aria-haspopup="true" aria-expanded="false" aria-controls="data-menu-panel">
+                    Data<span class="data-menu-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="data-menu-panel" id="data-menu-panel" role="menu">
+                    <button id="upload-btn" class="data-menu-item" role="menuitem">Import CSV</button>
+                    <button id="import-json-btn" class="data-menu-item" role="menuitem">Import JSON</button>
+                    <button id="export-btn" class="data-menu-item" role="menuitem">Export JSON</button>
+                    <button id="sample-data-btn" class="data-menu-item" role="menuitem">Load Sample Data</button>
+                    <hr class="data-menu-separator">
+                    <button id="clear-data-btn" class="data-menu-item data-menu-item-danger" role="menuitem">Clear Data</button>
+                </div>
+            </div>
+            <button id="today-btn" class="today-button">Today</button>
+        </div>
+
         <div class="scale-controls">
-            <input type="file" id="csv-upload" accept=".csv" style="display: none;">
-            <input type="file" id="json-upload" accept=".json" style="display: none;">
-            <button id="upload-btn" class="data-button">Import CSV</button>
-            <button id="import-json-btn" class="data-button">Import JSON</button>
-            <button id="export-btn" class="data-button">Export JSON</button>
-            <button id="sample-data-btn" class="data-button">Load Sample Data</button>
-            <button id="clear-data-btn" class="data-button">Clear Data</button>
-            <span class="scale-divider"></span>
             <button class="scale-btn" data-scale="hour">Hour</button>
             <button class="scale-btn" data-scale="day">Day</button>
             <button class="scale-btn" data-scale="week">Week</button>
