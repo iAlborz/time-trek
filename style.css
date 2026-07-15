@@ -161,6 +161,10 @@ body.projects-page {
 }
 
 .data-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
     background-color: var(--color-secondary);
     color: var(--color-text-on-fill);
     border: none;
@@ -172,6 +176,18 @@ body.projects-page {
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px rgba(15, 122, 112, 0.3);
+}
+
+/* Icons inherit the label's colour and optical weight */
+.btn-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .data-button:hover {
@@ -197,9 +213,9 @@ body.projects-page {
     font-size: 14px;
 }
 
+/* .data-button is now flex, so its gap handles the spacing */
 .data-menu-caret {
     font-size: 10px;
-    margin-left: 4px;
 }
 
 .data-menu-panel {
@@ -460,7 +476,33 @@ body.projects-page {
     display: flex;
     justify-content: center;
     gap: 12px;
+    margin-bottom: 12px;
+}
+
+.projects-sample-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-bottom: 32px;
+}
+
+.subtle-button {
+    background-color: var(--color-surface-muted);
+    color: var(--color-text-muted);
+    border: none;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.subtle-button:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text);
 }
 
 .project-grid {

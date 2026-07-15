@@ -1,6 +1,53 @@
 // projects-main.js — Projects landing page bootstrap
 
 import { ProjectManager } from './ProjectManager.js';
+import { TimelineData } from './TimelineData.js';
+import { SAMPLE_CSV } from './sampleData.js';
+
+const SAMPLE_NAME = 'Sample Project';
+const SAMPLE_DESC = 'A fictional 42-year biography — 81 nested events and durations.';
+
+// A view state that frames every item on screen. Without this the sample opens at
+// today's date and default zoom, leaving its 1980-2022 content far off-screen — the
+// timeline looks empty.
+function frameAllItems(data) {
+    let min = Infinity;
+    let max = -Infinity;
+
+    data.items.forEach(item => {
+        const start = item.type === 'duration' ? item.startDate : item.date;
+        const end = item.type === 'duration' ? (item.endDate || item.startDate) : item.date;
+        if (start) min = Math.min(min, start.dayOffset);
+        if (end) max = Math.max(max, end.dayOffset);
+    });
+
+    if (!isFinite(min) || !isFinite(max)) return { zoom: 1, offset: 0, expandedItems: [] };
+
+    const span = Math.max(max - min, 1) * 1.15;   // 15% breathing room
+    return {
+        zoom: (window.innerWidth || 1280) / span, // zoom is pixels per day
+        offset: (min + max) / 2,                  // offset is the day at screen centre
+        expandedItems: []
+    };
+}
+
+// Parse the shared demo CSV into a project object without storing it. TimelineData
+// does the CSV parsing and hierarchy resolution here exactly as it does on the
+// timeline page; it needs no canvas.
+function buildSampleProject() {
+    const data = new TimelineData();
+    data.parseCSVData(SAMPLE_CSV, new Date());
+    const now = new Date().toISOString();
+    return {
+        id: 'sample',
+        name: SAMPLE_NAME,
+        description: SAMPLE_DESC,
+        createdAt: now,
+        updatedAt: now,
+        items: ProjectManager.serializeItems(data.items, data.itemsById),
+        viewState: frameAllItems(data)
+    };
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('project-grid');
@@ -116,6 +163,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') {
             document.getElementById('new-project-create').click();
         }
+    });
+
+    // ── Sample Project ──────────────────────────────────────────────────────────
+
+    // Each click makes its own copy, so the sample stays disposable and edits to one
+    // don't touch another — same behaviour as importing a file twice.
+    document.getElementById('open-sample-btn').addEventListener('click', () => {
+        const sample = buildSampleProject();
+        const project = ProjectManager.createProject(SAMPLE_NAME, SAMPLE_DESC);
+        project.items = sample.items;
+        project.viewState = sample.viewState;
+        ProjectManager.saveProject(project);
+        openProject(project.id);
+    });
+
+    document.getElementById('download-sample-btn').addEventListener('click', () => {
+        ProjectManager.downloadJSON(buildSampleProject());
     });
 
     // ── Import Project ──────────────────────────────────────────────────────────

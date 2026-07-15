@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeTrek - Projects</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body class="projects-page">
     <div class="projects-container">
@@ -34,9 +34,26 @@
         </header>
 
         <div class="projects-actions">
-            <button id="new-project-btn" class="data-button">New Project</button>
-            <button id="import-project-btn" class="data-button">Import JSON</button>
+            <button id="new-project-btn" class="data-button">
+                <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path d="M8 3.5v9M3.5 8h9"/>
+                </svg>
+                New Project
+            </button>
+            <button id="import-project-btn" class="data-button">
+                <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path d="M8 10.5V2.5"/>
+                    <path d="M4.8 5.7 8 2.5l3.2 3.2"/>
+                    <path d="M2.5 10.5V12a1.5 1.5 0 0 0 1.5 1.5h8a1.5 1.5 0 0 0 1.5-1.5v-1.5"/>
+                </svg>
+                Import JSON
+            </button>
             <input type="file" id="json-import" accept=".json" style="display: none;">
+        </div>
+
+        <div class="projects-sample-actions">
+            <button id="open-sample-btn" class="subtle-button">Open Sample Project</button>
+            <button id="download-sample-btn" class="subtle-button">Download sample project</button>
         </div>
 
         <div id="project-grid" class="project-grid"></div>

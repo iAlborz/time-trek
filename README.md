@@ -16,7 +16,7 @@ cd time-trek
 python3 -m http.server 8000
 ```
 
-Then open <http://localhost:8000/projects.html> and click **New Project**, or **Load Sample Data** inside a timeline to see it populated.
+Then open <http://localhost:8000/projects.html> and click **Open Sample Project** to get a populated 81-item timeline to poke at, or **New Project** to start empty. **Download sample project** saves that same demo as a `.timetrek.json` file.
 
 Any static file server works — `npx serve` is fine too.
 
@@ -94,8 +94,9 @@ projects.html       Project list (entry point) — inlines the logo mark as SVG
 favicon.svg         Simplified logo mark for the browser tab
 style.css           Design tokens (:root) + all UI styling
 js/
-  main.js           Timeline bootstrap, button wiring, sample data
+  main.js           Timeline bootstrap, button wiring
   projects-main.js  Projects page bootstrap
+  sampleData.js     Demo dataset shared by both pages
   Timeline.js       Core controller — input, hit testing, edit modal
   TimelineData.js   Data model, CSV parsing, hierarchy, layout
   TimelineRenderer.js  Canvas drawing
