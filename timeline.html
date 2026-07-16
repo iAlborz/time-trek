@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeTrek - Interactive Timeline</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=10">
+    <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body class="timeline-page">
     <div class="container">
@@ -36,6 +36,8 @@
         </div>
 
         <div class="scale-controls">
+            <button id="fit-btn" class="scale-btn scale-btn-fit">Fit All</button>
+            <span class="scale-divider" aria-hidden="true"></span>
             <button class="scale-btn" data-scale="hour">Hour</button>
             <button class="scale-btn" data-scale="day">Day</button>
             <button class="scale-btn" data-scale="week">Week</button>

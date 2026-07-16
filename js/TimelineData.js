@@ -242,6 +242,29 @@ export class TimelineData {
         this.items.filter(item => item.level === 0).forEach(calc);
     }
 
+    // Zoom and offset that bring every item in the project on screen. Spans all
+    // items, not just expanded ones, so collapsed branches still count. Returns null
+    // when there's nothing to frame.
+    getFitViewState(viewportWidth) {
+        let min = Infinity;
+        let max = -Infinity;
+
+        this.items.forEach(item => {
+            const start = item.type === 'duration' ? item.startDate : item.date;
+            const end = item.type === 'duration' ? (item.endDate || item.startDate) : item.date;
+            if (start) min = Math.min(min, start.dayOffset);
+            if (end) max = Math.max(max, end.dayOffset);
+        });
+
+        if (!isFinite(min) || !isFinite(max)) return null;
+
+        const span = Math.max(max - min, 1) * 1.15;   // 15% breathing room
+        return {
+            zoom: viewportWidth / span,   // zoom is pixels per day
+            offset: (min + max) / 2       // offset is the day at screen centre
+        };
+    }
+
     getVisibleItems() {
         const visible = [];
         const addRecursive = (item) => {

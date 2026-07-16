@@ -256,6 +256,19 @@ body.projects-page {
     z-index: 100;
 }
 
+/* Fit All is a one-shot action; the rest of the bar is a scale selector where one
+   button is always active. The rule keeps that distinction visible. */
+.scale-divider {
+    width: 1px;
+    align-self: stretch;
+    margin: 0 4px;
+    background-color: var(--color-border);
+}
+
+.scale-btn-fit {
+    font-weight: 600;
+}
+
 .scale-btn {
     background-color: var(--color-surface-sunken);
     color: var(--color-text-muted);

@@ -7,30 +7,6 @@ import { SAMPLE_CSV } from './sampleData.js';
 const SAMPLE_NAME = 'Sample Project';
 const SAMPLE_DESC = 'A fictional 42-year biography — 81 nested events and durations.';
 
-// A view state that frames every item on screen. Without this the sample opens at
-// today's date and default zoom, leaving its 1980-2022 content far off-screen — the
-// timeline looks empty.
-function frameAllItems(data) {
-    let min = Infinity;
-    let max = -Infinity;
-
-    data.items.forEach(item => {
-        const start = item.type === 'duration' ? item.startDate : item.date;
-        const end = item.type === 'duration' ? (item.endDate || item.startDate) : item.date;
-        if (start) min = Math.min(min, start.dayOffset);
-        if (end) max = Math.max(max, end.dayOffset);
-    });
-
-    if (!isFinite(min) || !isFinite(max)) return { zoom: 1, offset: 0, expandedItems: [] };
-
-    const span = Math.max(max - min, 1) * 1.15;   // 15% breathing room
-    return {
-        zoom: (window.innerWidth || 1280) / span, // zoom is pixels per day
-        offset: (min + max) / 2,                  // offset is the day at screen centre
-        expandedItems: []
-    };
-}
-
 // Parse the shared demo CSV into a project object without storing it. TimelineData
 // does the CSV parsing and hierarchy resolution here exactly as it does on the
 // timeline page; it needs no canvas.
@@ -45,7 +21,9 @@ function buildSampleProject() {
         createdAt: now,
         updatedAt: now,
         items: ProjectManager.serializeItems(data.items, data.itemsById),
-        viewState: frameAllItems(data)
+        // Frame the whole sample, or it opens at today with its 1980-2022
+        // content off-screen and looks empty
+        viewState: { ...data.getFitViewState(window.innerWidth || 1280), expandedItems: [] }
     };
 }
 

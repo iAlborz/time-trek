@@ -138,6 +138,23 @@ export class Timeline {
         this.animator.startPan(this.offset, this.targetOffset, (o) => this.constrainOffset(o));
     }
 
+    // Frame every item in the project. Returns false when there's nothing to frame.
+    zoomToFit() {
+        const fit = this.data.getFitViewState(window.innerWidth);
+        if (!fit) return false;
+
+        // Wheel zooming leaves zoomCursorX set, and _onAnimationFrame uses it to hold
+        // the point under the cursor still. That would drag the offset around mid-
+        // flight and fight the pan below, so drop the anchor for a deliberate move.
+        this.zoomCursorX = undefined;
+
+        this.targetZoom = Math.max(0.0000000001, Math.min(fit.zoom, 2400));
+        this.targetOffset = this.constrainOffset(fit.offset);
+        this.animator.startZoom(this.zoom, this.targetZoom);
+        this.animator.startPan(this.offset, this.targetOffset, (o) => this.constrainOffset(o));
+        return true;
+    }
+
     constrainOffset(offset) {
         return Math.max(-this.bigBangLimitDays, offset);
     }
@@ -580,7 +597,7 @@ export class Timeline {
 
     updateActiveScaleButton() {
         const currentScale = this.getTimeScale();
-        const buttons = document.querySelectorAll('.scale-btn');
+        const buttons = document.querySelectorAll('.scale-btn[data-scale]');
         buttons.forEach(btn => {
             if (btn.dataset.scale === currentScale.unit) {
                 btn.classList.add('active');

@@ -92,10 +92,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ── Scale Buttons ───────────────────────────────────────────────────────────
-    document.querySelectorAll('.scale-btn').forEach(btn => {
+    // [data-scale] so the Fit button in the same bar isn't treated as a scale
+    document.querySelectorAll('.scale-btn[data-scale]').forEach(btn => {
         btn.addEventListener('click', () => {
             timeline.setScaleZoom(btn.dataset.scale);
         });
+    });
+
+    // ── Fit All ─────────────────────────────────────────────────────────────────
+    document.getElementById('fit-btn').addEventListener('click', () => {
+        timeline.zoomToFit();
+        debouncedSave();
     });
 
     // ── Add Item ────────────────────────────────────────────────────────────────

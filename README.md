@@ -43,7 +43,7 @@ Then open <http://localhost:8000>.
 
 **Projects** (`index.html`) is the entry point: a grid of your timelines, stored in the browser's `localStorage`. Create, rename, delete, or export them. Nothing is uploaded anywhere — your data stays in your browser.
 
-**The timeline** (`timeline.html?project=<id>`) is the canvas view. Pan and zoom continuously, or jump to a fixed scale with the buttons along the bottom. Changes auto-save back to the project after a 500ms debounce.
+**The timeline** (`timeline.html?project=<id>`) is the canvas view. Pan and zoom continuously, or jump to a fixed scale with the buttons along the bottom. **Fit All** frames every item in the project at once, however far apart they are. Changes auto-save back to the project after a 500ms debounce.
 
 ### Data model
 
