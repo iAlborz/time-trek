@@ -272,6 +272,19 @@ body.projects-page {
     will-change: transform;
 }
 
+/* Ties the dot up to its parent's underside — a dot alone doesn't say whose it is.
+   Height comes from --tl-tie, set per frame; 0 when there's no parent to reach. */
+.tl-event::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;            /* the dot's top edge */
+    left: 50%;
+    width: 1px;
+    height: var(--tl-tie, 0);
+    margin-left: -0.5px;
+    background-color: var(--color-border);
+}
+
 .tl-event[data-level="1"] { background-color: var(--event-1); }
 .tl-event[data-level="2"] { background-color: var(--event-2); }
 .tl-event[data-level="3"] { background-color: var(--event-3); }

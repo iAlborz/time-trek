@@ -41,7 +41,7 @@ export class ItemsLayer {
                 this._renderBar(item, layout, state, vw);
             } else if (item.type === 'event') {
                 if (layout.x < -50 || layout.x > vw + 50) continue;
-                this._renderEvent(item, layout, vw);
+                this._renderEvent(item, layout, state);
             } else {
                 continue;
             }
@@ -146,7 +146,7 @@ export class ItemsLayer {
         this._toggleAttr(pencil, 'data-cramped', pencilLeft < minPencilLeft);
     }
 
-    _renderEvent(item, layout, vw) {
+    _renderEvent(item, layout, state) {
         let node = this.nodes.get(item.id);
         if (!node || !node.dot) {
             const dot = document.createElement('div');
@@ -164,11 +164,28 @@ export class ItemsLayer {
 
         this._setStyle(dot, 'transform', `translate(${layout.x}px, ${layout.y}px)`);
         this._setAttr(dot, 'data-level', String(item.level % 6));
+        this._setVar(dot, '--tl-tie', `${this._tieHeight(item, layout, state)}px`);
 
         const label = dot.querySelector('.tl-event-name');
         if (label.textContent !== item.name) label.textContent = item.name;
 
         this._setAttr(pencil, 'aria-label', `Actions for ${this._describe(item)}`);
+    }
+
+    // A dot carries no nesting cue of its own, so tie it to its parent with a line
+    // rising from the dot to the parent's underside. Returns 0 when there's nothing
+    // to tie to — a top-level event, or a parent whose row was culled from layout.
+    _tieHeight(item, layout, state) {
+        const parentLayout = item.parentId ? state.itemLayout.get(item.parentId) : null;
+        if (!parentLayout) return 0;
+
+        // A bar's y is its top; a dot's y is its centre. Only durations carry height.
+        const parent = state.itemsById.get(item.parentId);
+        const parentBottom = parent && parent.type === 'duration'
+            ? parentLayout.y + parentLayout.height
+            : parentLayout.y + 4;
+
+        return Math.max(layout.y - 4 - parentBottom, 0);
     }
 
     // Screen-reader description. The visible name is aria-hidden and may be clipped
@@ -200,6 +217,11 @@ export class ItemsLayer {
     // Writing an identical value still dirties style; skip it to keep frames cheap
     _setStyle(el, prop, value) {
         if (el.style[prop] !== value) el.style[prop] = value;
+    }
+
+    // Custom properties are invisible to style[prop], so they need the long way round
+    _setVar(el, name, value) {
+        if (el.style.getPropertyValue(name) !== value) el.style.setProperty(name, value);
     }
 
     _setAttr(el, name, value) {
