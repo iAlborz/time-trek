@@ -7,8 +7,8 @@
 // Positions come from the same TimelineData.itemLayout the canvas renderer used,
 // so this is a change of output medium, not of layout maths.
 
-const PENCIL_TOTAL = 22;     // gap between an item's left edge and its pencil
 const BAR_RADIUS = 4;
+const PENCIL_INSET = 18;     // pencil's distance from a bar's visible right edge
 
 // Browsers cap element size around 33.5M px, and this app zooms to 2400 px/day —
 // a 42-year bar computes to ~36.8M px wide, past the cap. Canvas didn't care since
@@ -62,13 +62,11 @@ export class ItemsLayer {
         if (structureChanged) this._reorder(order);
     }
 
-    // Pencil before bar, matching how they read left-to-right on screen
     _reorder(order) {
         const seq = [];
         for (const id of order) {
             const node = this.nodes.get(id);
             if (!node) continue;
-            if (node.pencil) seq.push(node.pencil);
             if (node.bar) seq.push(node.bar);
             if (node.dot) seq.push(node.dot);
         }
@@ -89,7 +87,8 @@ export class ItemsLayer {
             const pencil = this._makePencil();
             bar.dataset.itemId = item.id;
             pencil.dataset.itemId = item.id;
-            this.host.append(bar, pencil);
+            bar.appendChild(pencil);          // lives inside the bar now
+            this.host.append(bar);
             node = { bar, pencil };
             this.nodes.set(item.id, node);
         }
@@ -112,7 +111,7 @@ export class ItemsLayer {
 
         const hasKids = item.children.length > 0;
         const expanded = state.expandedItems.has(item.id);
-        const chevron = bar.firstChild;
+        const chevron = bar.querySelector('.tl-chevron');
         this._setAttr(chevron, 'data-state', hasKids ? (expanded ? 'expanded' : 'collapsed') : 'none');
         // The button is 14px wide for a usable hit target; offset so the glyph still
         // centres on x+10, where the canvas drew it.
@@ -122,14 +121,20 @@ export class ItemsLayer {
             this._setAttr(chevron, 'aria-label', this._describe(item));
         }
 
-        const label = bar.lastChild;
+        const label = bar.querySelector('.tl-name');
         // Text sits at the bar's true left, so a clamped bar's label stays off-screen
         // exactly as the canvas drew it.
         this._setStyle(label, 'left', `${layout.x - left + (hasKids ? 18 : 5)}px`);
         if (label.textContent !== item.name) label.textContent = item.name;
 
         this._setAttr(pencil, 'aria-label', `Edit ${this._describe(item)}`);
-        this._placePencil(pencil, layout.x, layout.y + layout.height / 2, vw);
+
+        // Pin to the bar's visible right edge, not its true one: a bar wider than the
+        // screen is clamped, so a true-right pencil would sit off-screen and be
+        // unreachable exactly on the bars most likely to need editing.
+        const visibleRight = Math.min(layout.x + layout.width, vw);
+        const pencilLeft = Math.max(visibleRight - left - PENCIL_INSET, 0);
+        this._setStyle(pencil, 'left', `${pencilLeft}px`);
     }
 
     _renderEvent(item, layout, vw) {
@@ -141,7 +146,8 @@ export class ItemsLayer {
             const pencil = this._makePencil();
             dot.dataset.itemId = item.id;
             pencil.dataset.itemId = item.id;
-            this.host.append(dot, pencil);
+            dot.appendChild(pencil);          // a dot has no inside, so it hangs left
+            this.host.append(dot);
             node = { dot, pencil };
             this.nodes.set(item.id, node);
         }
@@ -150,11 +156,10 @@ export class ItemsLayer {
         this._setStyle(dot, 'transform', `translate(${layout.x}px, ${layout.y}px)`);
         this._setAttr(dot, 'data-level', String(item.level % 6));
 
-        const label = dot.firstChild;
+        const label = dot.querySelector('.tl-event-name');
         if (label.textContent !== item.name) label.textContent = item.name;
 
         this._setAttr(pencil, 'aria-label', `Edit ${this._describe(item)}`);
-        this._placePencil(pencil, layout.x, layout.y, vw);
     }
 
     // Screen-reader description. The visible name is aria-hidden and may be clipped
@@ -179,14 +184,6 @@ export class ItemsLayer {
             '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352' +
             'a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>';
         return el;
-    }
-
-    _placePencil(pencil, itemX, centerY, vw) {
-        const x = itemX - PENCIL_TOTAL;
-        const offscreen = x < -PENCIL_TOTAL || x > vw;
-        this._setStyle(pencil, 'display', offscreen ? 'none' : '');
-        if (offscreen) return;
-        this._setStyle(pencil, 'transform', `translate(${x}px, ${centerY}px)`);
     }
 
     // Writing an identical value still dirties style; skip it to keep frames cheap

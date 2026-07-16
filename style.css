@@ -187,22 +187,35 @@ body.projects-page {
     white-space: nowrap;
 }
 
+/* One pencil per item was a lot of permanent chrome, so it only shows on hover.
+   Opacity rather than display:none, so it stays in the tab order — and it reappears
+   on focus, or keyboard users could never reach an invisible control. */
 .tl-pencil {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 50%;
     width: 14px;
     height: 14px;
-    margin: -7px 0 0 -7px;   /* positioned by its centre, as the canvas drew it */
+    margin-top: -7px;
     padding: 0;
     background: none;
     border: none;
     color: var(--color-text-subtle);
+    opacity: 0;
+    transition: opacity 0.12s ease;
     pointer-events: auto;
     cursor: pointer;
 }
 
+.tl-bar:hover .tl-pencil,
+.tl-event:hover .tl-pencil,
+.tl-pencil:focus-visible {
+    opacity: 1;
+}
+
 .tl-pencil:hover { color: var(--color-text); }
+
+/* A dot has no inside, so its pencil hangs off the left as before */
+.tl-event .tl-pencil { left: -24px; }
 
 .tl-pencil svg { display: block; width: 14px; height: 14px; }
 

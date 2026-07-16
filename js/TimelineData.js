@@ -13,9 +13,9 @@ export class TimelineData {
         this.durationBarHeight = 28;
         this.durationBarSpacing = 5;
 
-        // Horizontal footprint used when packing bars into rows
-        this.barGutterLeft = 30;   // the pencil hangs off the bar's left edge
-        this.barGapX = 8;          // minimum gap so neighbours read as separate bars
+        // Horizontal footprint used when packing items into rows
+        this.barGapX = 8;            // minimum gap so neighbours read as separate items
+        this.eventGutterLeft = 30;   // an event's pencil hangs off the left of its dot
         this.eventLabelOffset = 12;  // gap between an event dot and its label
         this.eventLabelFont = '10px -apple-system, BlinkMacSystemFont, sans-serif';
         this._labelWidths = new Map();
@@ -340,15 +340,15 @@ export class TimelineData {
             if (item.type === 'duration') {
                 layout = this._calcDurationPosition(item, centerX, pixelsPerDay, offset, centerTime);
                 if (!layout) return;
-                // The footprint runs wider than the bar: the pencil hangs off the
-                // left, and bars need a gap or they read as one continuous run.
-                left = layout.x - this.barGutterLeft;
+                // The pencil sits inside the bar, so only a gap is reserved — bars
+                // need one or they read as a single continuous run.
+                left = layout.x - this.barGapX;
                 right = layout.x + layout.width + this.barGapX;
             } else if (item.type === 'event') {
                 layout = this._calcEventPosition(item, centerX, pixelsPerDay, offset, centerTime);
                 if (!layout) return;
                 // Dot plus its label to the right, and the pencil hanging off the left
-                left = layout.x - this.barGutterLeft;
+                left = layout.x - this.eventGutterLeft;
                 right = layout.x + this.eventLabelOffset + this._measureLabel(item.name) + this.barGapX;
             } else {
                 return;
