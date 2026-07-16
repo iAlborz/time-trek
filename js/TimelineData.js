@@ -277,11 +277,21 @@ export class TimelineData {
         const addRecursive = (item) => {
             visible.push(item);
             if (this.expandedItems.has(item.id)) {
-                item.children.forEach(addRecursive);
+                this._eventsFirst(item.children).forEach(addRecursive);
             }
         };
-        this.items.filter(item => item.level === 0).forEach(addRecursive);
+        this._eventsFirst(this.items.filter(item => item.level === 0)).forEach(addRecursive);
         return visible;
+    }
+
+    // Order decides packing (see calculateLayout), and this walk is depth-first: a
+    // duration sibling brings its whole subtree along before the next sibling gets a
+    // row. An event listed after one would land below all of it, far from the parent
+    // it belongs to. Events go first so a point sits just under its parent instead.
+    // Stable, so authored order still decides between two events or two durations.
+    _eventsFirst(items) {
+        const rank = (item) => (item.type === 'event' ? 0 : 1);
+        return [...items].sort((a, b) => rank(a) - rank(b));
     }
 
     toggleItemExpansion(itemId) {
@@ -316,6 +326,8 @@ export class TimelineData {
         //    there, or the nesting would read backwards
         //  - one pass in hierarchy order, so a parent always has a row before its
         //    children ask for one — whatever their types
+        //  - events ask before their duration siblings, so a point lands directly
+        //    under its parent rather than below whole sibling subtrees
         const rows = [];   // rows[i] = occupied [left, right] spans, in screen px
 
         const claimRow = (left, right, startRow) => {
