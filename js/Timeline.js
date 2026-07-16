@@ -1031,6 +1031,13 @@ export class Timeline {
         const expand = menu.querySelector('[data-item-action="expand"]');
         if (expand) expand.hidden = item.children.length === 0;
 
+        // ...and "Zoom to fit" on a subtree with no span, which would only recentre
+        const fit = menu.querySelector('[data-item-action="fit"]');
+        if (fit) {
+            const extent = this._subtreeExtent(item);
+            fit.hidden = !extent || extent.max === extent.min;
+        }
+
         menu.hidden = false;
 
         // Place under the trigger, nudged back inside the viewport if it would spill.

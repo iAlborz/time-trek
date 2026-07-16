@@ -465,6 +465,11 @@ body.projects-page {
     transition: background-color 0.15s ease;
 }
 
+/* the display above would otherwise beat [hidden] */
+.menu-item[hidden] {
+    display: none;
+}
+
 .menu-item:hover {
     background-color: var(--color-surface-muted);
 }
