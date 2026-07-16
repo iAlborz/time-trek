@@ -15,6 +15,13 @@ import { ItemsLayer } from './ItemsLayer.js';
 // slight wobble while clicking an item doesn't swallow the click.
 const DRAG_THRESHOLD = 4;
 
+// The scale bar shows a window around the current scale, not all fifteen. It reaches
+// one step back as well as forward — a forward-only window would strand you, since
+// clicking out to a coarser scale would leave no button to return on.
+const SCALE_WINDOW_BEFORE = 1;
+const SCALE_WINDOW_AFTER = 2;
+const SCALE_WINDOW = SCALE_WINDOW_BEFORE + 1 + SCALE_WINDOW_AFTER;
+
 const PRECISIONS = {
     year:     { inputType: 'text',           hint: 'Year, or BC/BCE, AD/CE, and deep time: 3000 BC · 65 MYA · 4.5 BYA' },
     month:    { inputType: 'month',          hint: '' },
@@ -69,6 +76,7 @@ export class Timeline {
         } else {
             this.scales.splice(insertIndex, 0, scale);
         }
+        this._scaleIndex = null;   // order changed
     }
 
     getTimeScale() {
@@ -595,16 +603,34 @@ export class Timeline {
         return currentScale.formatCenter(centerDate, actualYear, actualMonth, actualDay);
     }
 
+    // Show a window of scales around the current one rather than all fifteen. The
+    // window slides as you move through them, and stays whole at either end — at
+    // Hour there's nothing to the left, so it shifts right instead of shrinking.
     updateActiveScaleButton() {
         const currentScale = this.getTimeScale();
-        const buttons = document.querySelectorAll('.scale-btn[data-scale]');
-        buttons.forEach(btn => {
-            if (btn.dataset.scale === currentScale.unit) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
+        const index = this._scaleIndexOf();
+        const current = index.get(currentScale.unit) ?? 0;
+
+        const last = this.scales.length - SCALE_WINDOW;
+        const start = Math.max(0, Math.min(current - SCALE_WINDOW_BEFORE, last));
+        const end = start + SCALE_WINDOW - 1;
+
+        if (!this._scaleButtons) {
+            this._scaleButtons = [...document.querySelectorAll('.scale-btn[data-scale]')];
+        }
+        this._scaleButtons.forEach(btn => {
+            const i = index.get(btn.dataset.scale);
+            btn.hidden = i === undefined || i < start || i > end;
+            btn.classList.toggle('active', btn.dataset.scale === currentScale.unit);
         });
+    }
+
+    // Cached: this runs every frame while panning and zooming
+    _scaleIndexOf() {
+        if (!this._scaleIndex) {
+            this._scaleIndex = new Map(this.scales.map((s, i) => [s.unit, i]));
+        }
+        return this._scaleIndex;
     }
 
     // ── Edit Modal ──────────────────────────────────────────────────────────────
