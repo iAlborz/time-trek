@@ -32,7 +32,9 @@
     --color-focus: #CC3B3B;
 
     /* Timeline item colours, cycled by nesting depth. These previously lived as two
-       hardcoded arrays inside TimelineRenderer.js, where CSS couldn't reach them. */
+       hardcoded arrays inside TimelineRenderer.js, where CSS couldn't reach them.
+       Bars carry them as an outline over a shared fill; event dots use them solid. */
+    --level-fill: #F1F3F5;
     --level-0: #FF6B6B;
     --level-1: #4ECDC4;
     --level-2: #45B7D1;
@@ -108,17 +110,18 @@ body.projects-page {
     top: 0;
     left: 0;
     overflow: hidden;       /* long names clip at the bar's edge */
-    background-color: var(--level-0);
+    background-color: var(--level-fill);
+    border: 1px solid var(--level-0);
     pointer-events: auto;
     cursor: pointer;
     will-change: transform, width;
 }
 
-.tl-bar[data-level="1"] { background-color: var(--level-1); }
-.tl-bar[data-level="2"] { background-color: var(--level-2); }
-.tl-bar[data-level="3"] { background-color: var(--level-3); }
-.tl-bar[data-level="4"] { background-color: var(--level-4); }
-.tl-bar[data-level="5"] { background-color: var(--level-5); }
+.tl-bar[data-level="1"] { border-color: var(--level-1); }
+.tl-bar[data-level="2"] { border-color: var(--level-2); }
+.tl-bar[data-level="3"] { border-color: var(--level-3); }
+.tl-bar[data-level="4"] { border-color: var(--level-4); }
+.tl-bar[data-level="5"] { border-color: var(--level-5); }
 
 /* A real <button>, so it needs the UA styles stripped */
 .tl-chevron {

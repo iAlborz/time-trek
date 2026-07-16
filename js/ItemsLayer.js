@@ -8,7 +8,7 @@
 // so this is a change of output medium, not of layout maths.
 
 const PENCIL_TOTAL = 22;     // gap between an item's left edge and its pencil
-const BAR_RADIUS = 20;
+const BAR_RADIUS = 4;
 
 // Browsers cap element size around 33.5M px, and this app zooms to 2400 px/day —
 // a 42-year bar computes to ~36.8M px wide, past the cap. Canvas didn't care since

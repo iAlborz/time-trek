@@ -10,8 +10,15 @@ export class TimelineData {
         this.itemLayout = new Map();
 
         // Duration bar styling
-        this.durationBarHeight = 20;
+        this.durationBarHeight = 28;
         this.durationBarSpacing = 5;
+
+        // Horizontal footprint used when packing bars into rows
+        this.barGutterLeft = 30;   // the pencil hangs off the bar's left edge
+        this.barGapX = 8;          // minimum gap so neighbours read as separate bars
+        this.eventLabelOffset = 12;  // gap between an event dot and its label
+        this.eventLabelFont = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+        this._labelWidths = new Map();
     }
 
     // ── CSV Parsing ────────────────────────────────────────────────────────────
@@ -296,34 +303,61 @@ export class TimelineData {
         const centerTime = centerDate.getTime();
 
         const visibleItems = this.getVisibleItems();
-        let currentY = timelineY + 50;
+        const firstRowY = timelineY + 50;
+        const rowPitch = this.durationBarHeight + this.durationBarSpacing;
 
-        // Duration bars
-        visibleItems.forEach(item => {
-            if (item.type === 'duration') {
-                const layout = this._calcDurationPosition(item, centerX, pixelsPerDay, offset, centerTime);
-                if (layout) {
-                    layout.y = currentY;
-                    layout.height = this.durationBarHeight;
-                    this.itemLayout.set(item.id, layout);
-                    currentY += this.durationBarHeight + this.durationBarSpacing;
+        // Pack bars into rows: each one takes the topmost row where it doesn't
+        // collide horizontally, rather than every bar claiming a row of its own and
+        // marching off the bottom of the screen. Items are walked in hierarchy order,
+        // so a parent settles above its children, and siblings that don't overlap in
+        // time end up sharing a row.
+        const rows = [];   // rows[i] = occupied [left, right] spans, in screen px
+
+        const claimRow = (left, right, startRow = 0) => {
+            for (let i = startRow; i < rows.length; i++) {
+                const collides = rows[i].some(span => left < span.right && right > span.left);
+                if (!collides) {
+                    rows[i].push({ left, right });
+                    return i;
                 }
             }
+            rows.push([{ left, right }]);
+            return rows.length - 1;
+        };
+
+        visibleItems.forEach(item => {
+            if (item.type !== 'duration') return;
+            const layout = this._calcDurationPosition(item, centerX, pixelsPerDay, offset, centerTime);
+            if (!layout) return;
+
+            // The footprint runs wider than the bar: the pencil hangs off the left,
+            // and bars need a gap so they don't read as one continuous run.
+            const left = layout.x - this.barGutterLeft;
+            const right = layout.x + layout.width + this.barGapX;
+
+            layout.y = firstRowY + claimRow(left, right) * rowPitch;
+            layout.height = this.durationBarHeight;
+            this.itemLayout.set(item.id, layout);
         });
 
-        // Events
-        const eventCountByParent = new Map();
+        // Events join the same grid, starting just below their parent so they stay
+        // visually owned by it. Packing bars alone isn't enough: bars now move up,
+        // so anything still positioned relative to a parent lands on top of them.
         visibleItems.forEach(item => {
-            if (item.type === 'event') {
-                const parentId = item.parentId || 'root';
-                const count = eventCountByParent.get(parentId) || 0;
-                eventCountByParent.set(parentId, count + 1);
+            if (item.type !== 'event') return;
+            const layout = this._calcEventPosition(item, centerX, pixelsPerDay, offset, centerTime);
+            if (!layout) return;
 
-                const layout = this._calcEventPosition(item, centerX, pixelsPerDay, offset, centerTime, timelineY, count);
-                if (layout) {
-                    this.itemLayout.set(item.id, layout);
-                }
-            }
+            const parentLayout = item.parentId ? this.itemLayout.get(item.parentId) : null;
+            const parentRow = parentLayout ? Math.round((parentLayout.y - firstRowY) / rowPitch) : -1;
+
+            // Dot plus its label to the right, and the pencil hanging off the left
+            const left = layout.x - this.barGutterLeft;
+            const right = layout.x + this.eventLabelOffset + this._measureLabel(item.name) + this.barGapX;
+
+            const row = claimRow(left, right, parentRow + 1);
+            layout.y = firstRowY + row * rowPitch + this.durationBarHeight / 2;   // centred in the row
+            this.itemLayout.set(item.id, layout);
         });
     }
 
@@ -353,7 +387,7 @@ export class TimelineData {
         return { x: startX, width };
     }
 
-    _calcEventPosition(item, centerX, pixelsPerDay, offset, centerTime, timelineY, eventIndex) {
+    _calcEventPosition(item, centerX, pixelsPerDay, offset, centerTime) {
         if (item.type !== 'event' || !item.date) return null;
 
         let dayOffset;
@@ -362,16 +396,21 @@ export class TimelineData {
         } else {
             dayOffset = item.date.dayOffset;
         }
-        const x = centerX + (dayOffset - offset) * pixelsPerDay;
 
-        let parentY = timelineY;
-        if (item.parentId) {
-            const parentLayout = this.itemLayout.get(item.parentId);
-            if (parentLayout) {
-                parentY = parentLayout.y + parentLayout.height + 10 + (eventIndex * 15);
-            }
+        // y is assigned by the row packer in calculateLayout
+        return { x: centerX + (dayOffset - offset) * pixelsPerDay, y: 0, width: 8, height: 8, type: 'event' };
+    }
+
+    // Packing needs an event's label width, and the label is the wide part of its
+    // footprint. Measured rather than estimated, and cached — names rarely change.
+    _measureLabel(text) {
+        if (this._labelWidths.has(text)) return this._labelWidths.get(text);
+        if (!this._measureCtx) {
+            this._measureCtx = document.createElement('canvas').getContext('2d');
+            this._measureCtx.font = this.eventLabelFont;
         }
-
-        return { x, y: parentY, width: 8, height: 8, type: 'event' };
+        const width = this._measureCtx.measureText(text).width;
+        this._labelWidths.set(text, width);
+        return width;
     }
 }
