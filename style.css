@@ -255,11 +255,18 @@ body.projects-page {
     box-shadow: 0 2px 6px rgba(204, 59, 59, 0.3);
 }
 
+/* Stays position:fixed with left/right 12px — .container is a flex parent that can
+   exceed the viewport, so an absolutely positioned bar overflows it. Those two edges
+   bound the box; width:fit-content then hugs the content inside them and margin auto
+   centres it. (Centring via left:50% instead would cap the bar at 50vw, because
+   that's all the width a shrink-to-fit box would have left to grow into.) */
 .scale-controls {
     position: fixed;
     bottom: 12px;
     left: 12px;
     right: 12px;
+    width: fit-content;
+    margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -282,7 +289,15 @@ body.projects-page {
 }
 
 .scale-btn-fit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-weight: 600;
+}
+
+.scale-btn-fit .btn-icon {
+    width: 12px;
+    height: 12px;
 }
 
 .scale-btn {
