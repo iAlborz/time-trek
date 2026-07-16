@@ -93,11 +93,13 @@ body.projects-page {
 
 /* ── Timeline items (DOM layer over the canvas) ────────────────────────────── */
 
+/* The layer itself is transparent to the pointer, so gaps between items fall
+   through to the canvas and dragging empty space still pans. Items opt back in. */
 .tl-items {
     position: fixed;
     inset: 0;
     overflow: hidden;
-    pointer-events: none;   /* the canvas below still handles panning and clicks */
+    pointer-events: none;
     z-index: 1;
 }
 
@@ -107,6 +109,8 @@ body.projects-page {
     left: 0;
     overflow: hidden;       /* long names clip at the bar's edge */
     background-color: var(--level-0);
+    pointer-events: auto;
+    cursor: pointer;
     will-change: transform, width;
 }
 
@@ -150,6 +154,8 @@ body.projects-page {
     margin: -4px 0 0 -4px;   /* layout.x/y is the dot's centre */
     border-radius: 50%;
     background-color: var(--event-0);
+    pointer-events: auto;
+    cursor: pointer;
     will-change: transform;
 }
 
@@ -180,7 +186,11 @@ body.projects-page {
     height: 14px;
     margin: -7px 0 0 -7px;   /* positioned by its centre, as the canvas drew it */
     color: var(--color-text-subtle);
+    pointer-events: auto;
+    cursor: pointer;
 }
+
+.tl-pencil:hover { color: var(--color-text); }
 
 .tl-pencil svg { display: block; width: 14px; height: 14px; }
 

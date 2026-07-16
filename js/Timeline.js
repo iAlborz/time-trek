@@ -11,6 +11,10 @@ import { ItemsLayer } from './ItemsLayer.js';
 // already encodes it ("2025" / "2025-03" / "2025-03-01" / "2025-03-01T14:30") and
 // round-trips through CSV and JSON unchanged, so precision is detected on read.
 // Each input type emits exactly the string format DateParser expects.
+// Pixels of movement before a mousedown counts as a pan rather than a click, so a
+// slight wobble while clicking an item doesn't swallow the click.
+const DRAG_THRESHOLD = 4;
+
 const PRECISIONS = {
     year:     { inputType: 'text',           hint: 'Year, or BC/BCE, AD/CE, and deep time: 3000 BC · 65 MYA · 4.5 BYA' },
     month:    { inputType: 'month',          hint: '' },
@@ -141,8 +145,16 @@ export class Timeline {
     // ── Event Listeners ────────────────────────────────────────────────────────
 
     setupEventListeners() {
+        // Items are DOM now, so they'd swallow wheel and mousedown before the canvas
+        // saw them. Listen on the shared parent instead and ignore the fixed controls
+        // that also live there.
+        const container = this.canvas.parentElement;
+        const fromControls = (e) =>
+            e.target.closest && e.target.closest('.top-controls, .scale-controls, .back-button');
+
         // Wheel zoom (zoom towards cursor)
-        this.canvas.addEventListener('wheel', (e) => {
+        container.addEventListener('wheel', (e) => {
+            if (fromControls(e)) return;
             e.preventDefault();
             const now = Date.now();
             if (now - this.lastWheelTime < this.wheelThrottleDelay) {
@@ -169,50 +181,69 @@ export class Timeline {
             this.animator.startZoom(this.zoom, this.targetZoom);
         });
 
-        // Mouse drag
-        this.canvas.addEventListener('mousedown', (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+        // Drag to pan — from anywhere over the timeline, including across an item
+        container.addEventListener('mousedown', (e) => {
+            if (fromControls(e)) return;
+            this.isDragging = true;
+            this.lastMouseX = e.clientX;
+            this._dragOriginX = e.clientX;
+            this._dragOriginY = e.clientY;
+            this._dragMoved = false;
+        });
 
-            const hit = this.data.hitTest(x, y);
-            if (hit) {
-                if (hit.action === 'edit') {
-                    this.showEditModal(hit.item);
-                } else if (hit.action === 'toggle' && hit.hasChildren) {
-                    this.data.toggleItemExpansion(hit.item.id);
+        // On window, so a drag that leaves the viewport still tracks and still ends
+        window.addEventListener('mousemove', (e) => {
+            if (!this.isDragging) return;
+            if (!this._dragMoved &&
+                Math.hypot(e.clientX - this._dragOriginX, e.clientY - this._dragOriginY) > DRAG_THRESHOLD) {
+                this._dragMoved = true;
+            }
+            const deltaX = e.clientX - this.lastMouseX;
+            this.offset = this.constrainOffset(this.offset - deltaX / this.zoom);
+            this.lastMouseX = e.clientX;
+            this.data.calculateLayout(this.zoom, this.offset, this.centerDate, window.innerWidth, window.innerHeight);
+            this.draw();
+        });
+
+        window.addEventListener('mouseup', () => { this.isDragging = false; });
+
+        // A pan that happens to end on an item would otherwise fire a click on it.
+        // Capture phase, so this runs before the item handlers below.
+        container.addEventListener('click', (e) => {
+            if (!this._dragMoved) return;
+            this._dragMoved = false;
+            e.stopPropagation();
+            e.preventDefault();
+        }, true);
+
+        // Item clicks — the browser hit-tests for us now
+        if (this.itemsLayer) {
+            this.itemsLayer.host.addEventListener('click', (e) => {
+                const target = e.target.closest('[data-item-id]');
+                if (!target) return;
+                const item = this.data.itemsById.get(target.dataset.itemId);
+                if (!item) return;
+
+                if (target.classList.contains('tl-pencil')) {
+                    this.showEditModal(item);
+                    return;
+                }
+                if (item.children.length > 0) {
+                    this.data.toggleItemExpansion(item.id);
                     this.data.calculateLayout(this.zoom, this.offset, this.centerDate, window.innerWidth, window.innerHeight);
                     this.draw();
                 }
-                return;
-            }
-
-            this.isDragging = true;
-            this.lastMouseX = e.clientX;
-        });
-
-        this.canvas.addEventListener('mousemove', (e) => {
-            if (this.isDragging) {
-                const deltaX = e.clientX - this.lastMouseX;
-                this.offset = this.constrainOffset(this.offset - deltaX / this.zoom);
-                this.lastMouseX = e.clientX;
-                this.data.calculateLayout(this.zoom, this.offset, this.centerDate, window.innerWidth, window.innerHeight);
-                this.draw();
-            }
-        });
-
-        this.canvas.addEventListener('mouseup', () => { this.isDragging = false; });
-        this.canvas.addEventListener('mouseleave', () => { this.isDragging = false; });
+            });
+        }
 
         // Double-click empty space to create an item at that point in time
-        this.canvas.addEventListener('dblclick', (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            if (this.data.hitTest(x, y)) return;
+        container.addEventListener('dblclick', (e) => {
+            if (fromControls(e)) return;
+            if (e.target.closest('[data-item-id]')) return;   // landed on an item
 
+            const rect = this.canvas.getBoundingClientRect();
             this.isDragging = false;
-            this.openItemModal({ prefillDate: this.dateAtX(x) });
+            this.openItemModal({ prefillDate: this.dateAtX(e.clientX - rect.left) });
         });
 
         window.addEventListener('resize', () => {

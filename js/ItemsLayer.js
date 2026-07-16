@@ -60,6 +60,8 @@ export class ItemsLayer {
                 'stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 1 5.5 4 2.5 7"/></svg>' +
                 '</span><span class="tl-name"></span>';
             const pencil = this._makePencil();
+            bar.dataset.itemId = item.id;
+            pencil.dataset.itemId = item.id;
             this.host.append(bar, pencil);
             node = { bar, pencil };
             this.nodes.set(item.id, node);
@@ -103,6 +105,8 @@ export class ItemsLayer {
             dot.className = 'tl-event';
             dot.innerHTML = '<span class="tl-event-name"></span>';
             const pencil = this._makePencil();
+            dot.dataset.itemId = item.id;
+            pencil.dataset.itemId = item.id;
             this.host.append(dot, pencil);
             node = { dot, pencil };
             this.nodes.set(item.id, node);
