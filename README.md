@@ -29,9 +29,9 @@ Any static file server will do:
 python3 -m http.server 8000     # or: npx serve
 ```
 
-Then open <http://localhost:8000/projects.html>.
+Then open <http://localhost:8000>.
 
-**Why is a server needed at all?** There's no build step, but the app loads its JavaScript as ES modules, and browsers refuse to load modules over `file://` (the origin is `null`, so it trips CORS). Opening `index.html` by double-clicking it will not work. The launcher scripts just start one of these servers for you.
+**Why is a server needed at all?** There's no build step, but the app loads its JavaScript as ES modules, and browsers refuse to load modules over `file://` (the origin is `null`, so it trips CORS). Opening the HTML files by double-clicking them will not work. The launcher scripts just start one of these servers for you.
 
 **The launcher needs Python, Ruby, or Node** — it uses whichever it finds. macOS no longer ships Python, so if none are present the script says so and points you at [python.org](https://www.python.org/downloads/).
 
@@ -41,9 +41,9 @@ Then open <http://localhost:8000/projects.html>.
 
 ## How it works
 
-**Projects** (`projects.html`) is the entry point: a grid of your timelines, stored in the browser's `localStorage`. Create, rename, delete, or export them. Nothing is uploaded anywhere — your data stays in your browser.
+**Projects** (`index.html`) is the entry point: a grid of your timelines, stored in the browser's `localStorage`. Create, rename, delete, or export them. Nothing is uploaded anywhere — your data stays in your browser.
 
-**The timeline** (`index.html?project=<id>`) is the canvas view. Pan and zoom continuously, or jump to a fixed scale with the buttons along the bottom. Changes auto-save back to the project after a 500ms debounce.
+**The timeline** (`timeline.html?project=<id>`) is the canvas view. Pan and zoom continuously, or jump to a fixed scale with the buttons along the bottom. Changes auto-save back to the project after a 500ms debounce.
 
 ### Data model
 
@@ -108,8 +108,8 @@ Deep-time values are positioned by day offset from today rather than by a real `
 ## Project layout
 
 ```
-index.html          Timeline view
-projects.html       Project list (entry point) — inlines the logo mark as SVG
+index.html          Project list — the entry point; inlines the logo mark as SVG
+timeline.html       Timeline view
 favicon.svg         Simplified logo mark for the browser tab
 style.css           Design tokens (:root) + all UI styling
 start-timetrek.sh   Local server + browser launcher (macOS/Linux)

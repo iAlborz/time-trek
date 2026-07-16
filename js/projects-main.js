@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openProject(id) {
         ProjectManager.setActiveProjectId(id);
-        window.location.href = `index.html?project=${id}`;
+        window.location.href = `timeline.html?project=${id}`;
     }
 
     // ── New Project ─────────────────────────────────────────────────────────────

@@ -3,116 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeTrek - Interactive Timeline</title>
+    <title>TimeTrek - Projects</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css?v=7">
 </head>
-<body class="timeline-page">
-    <div class="container">
-        <canvas id="timeline-canvas"></canvas>
-        <a href="projects.html" id="back-btn" class="back-button">← Projects</a>
+<body class="projects-page">
+    <div class="projects-container">
+        <header class="projects-header">
+            <!-- Decorative: the <h1> below carries the accessible name -->
+            <svg class="logo-mark" viewBox="0 0 92 42" aria-hidden="true" focusable="false">
+                <g fill="none" stroke-linecap="round" stroke-width="2">
+                    <line x1="45" y1="2" x2="45" y2="40" stroke="var(--color-ink)" stroke-width="1.8"/>
+                    <line x1="13" y1="11.5" x2="42.5" y2="11.5" stroke="var(--color-secondary)"/>
+                    <line x1="48" y1="11.5" x2="70" y2="11.5" stroke="var(--color-secondary)"/>
+                    <line x1="10.5" y1="20.5" x2="41" y2="20.5" stroke="var(--color-brand)"/>
+                    <line x1="49.5" y1="20.5" x2="88" y2="20.5" stroke="var(--color-brand)"/>
+                    <line x1="2" y1="28.5" x2="42.5" y2="28.5" stroke="var(--color-amber)"/>
+                    <line x1="48" y1="28.5" x2="70.5" y2="28.5" stroke="var(--color-amber)"/>
+                </g>
+                <g stroke="none">
+                    <circle cx="9" cy="11.5" r="1.1" fill="var(--color-secondary)"/>
+                    <circle cx="71" cy="11.5" r="1.9" fill="var(--color-secondary)"/>
+                    <circle cx="89" cy="20.5" r="2.3" fill="var(--color-brand)"/>
+                    <circle cx="72" cy="28.5" r="1.9" fill="var(--color-amber)"/>
+                    <circle cx="45" cy="20.5" r="3.3" fill="var(--color-ink)"/>
+                </g>
+            </svg>
+            <h1 class="projects-title">TimeTrek</h1>
+            <p class="projects-subtitle">Your timelines, organized.</p>
+        </header>
 
-        <input type="file" id="csv-upload" accept=".csv" style="display: none;">
-        <input type="file" id="json-upload" accept=".json" style="display: none;">
-
-        <div class="top-controls">
-            <div class="data-menu" id="data-menu">
-                <button id="data-menu-btn" class="data-button data-menu-trigger"
-                        aria-haspopup="true" aria-expanded="false" aria-controls="data-menu-panel">
-                    Data<span class="data-menu-caret" aria-hidden="true">▾</span>
-                </button>
-                <div class="data-menu-panel" id="data-menu-panel" role="menu">
-                    <button id="upload-btn" class="data-menu-item" role="menuitem">Import CSV</button>
-                    <button id="import-json-btn" class="data-menu-item" role="menuitem">Import JSON</button>
-                    <button id="export-btn" class="data-menu-item" role="menuitem">Export JSON</button>
-                    <button id="sample-data-btn" class="data-menu-item" role="menuitem">Load Sample Data</button>
-                    <hr class="data-menu-separator">
-                    <button id="clear-data-btn" class="data-menu-item data-menu-item-danger" role="menuitem">Clear Data</button>
-                </div>
-            </div>
-            <button id="add-item-btn" class="today-button">+ Add Item</button>
-            <button id="today-btn" class="today-button">Today</button>
+        <div class="projects-actions">
+            <button id="new-project-btn" class="data-button">
+                <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path d="M8 3.5v9M3.5 8h9"/>
+                </svg>
+                New Project
+            </button>
+            <button id="import-project-btn" class="data-button">
+                <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path d="M8 10.5V2.5"/>
+                    <path d="M4.8 5.7 8 2.5l3.2 3.2"/>
+                    <path d="M2.5 10.5V12a1.5 1.5 0 0 0 1.5 1.5h8a1.5 1.5 0 0 0 1.5-1.5v-1.5"/>
+                </svg>
+                Import JSON
+            </button>
+            <input type="file" id="json-import" accept=".json" style="display: none;">
         </div>
 
-        <div class="scale-controls">
-            <button class="scale-btn" data-scale="hour">Hour</button>
-            <button class="scale-btn" data-scale="day">Day</button>
-            <button class="scale-btn" data-scale="week">Week</button>
-            <button class="scale-btn" data-scale="month">Month</button>
-            <button class="scale-btn" data-scale="quarter">Quarter</button>
-            <button class="scale-btn" data-scale="year">Year</button>
-            <button class="scale-btn" data-scale="decade">Decade</button>
-            <button class="scale-btn" data-scale="century">Century</button>
-            <button class="scale-btn" data-scale="millennium">Millennium</button>
-            <button class="scale-btn" data-scale="ten-thousand">10K Years</button>
-            <button class="scale-btn" data-scale="hundred-thousand">100K Years</button>
-            <button class="scale-btn" data-scale="million">Million Years</button>
-            <button class="scale-btn" data-scale="ten-million">10M Years</button>
-            <button class="scale-btn" data-scale="hundred-million">100M Years</button>
-            <button class="scale-btn" data-scale="billion">Billion Years</button>
+        <div class="projects-sample-actions">
+            <button id="open-sample-btn" class="subtle-button">Open Sample Project</button>
+            <button id="download-sample-btn" class="subtle-button">Download sample project</button>
+        </div>
+
+        <div id="project-grid" class="project-grid"></div>
+
+        <div id="empty-state" class="projects-empty" style="display: none;">
+            <p>No projects yet. Create one or import a .timetrek.json file to get started.</p>
         </div>
     </div>
 
-    <!-- Edit / Add Modal -->
-    <div id="edit-modal" class="edit-modal">
+    <!-- New Project Modal -->
+    <div id="new-project-modal" class="edit-modal">
         <div class="edit-modal-content">
-            <h3 class="edit-modal-title" id="edit-modal-title">Edit Item</h3>
-            <label class="edit-label">Name
-                <input type="text" id="edit-name" class="edit-input">
+            <h3 class="edit-modal-title">New Project</h3>
+            <label class="edit-label">Project Name
+                <input type="text" id="new-project-name" class="edit-input" placeholder="My Timeline">
             </label>
-            <label class="edit-label">Type
-                <select id="edit-type" class="edit-input">
-                    <option value="duration">Duration</option>
-                    <option value="event">Event</option>
-                </select>
+            <label class="edit-label">Description (optional)
+                <textarea id="new-project-desc" class="edit-input edit-textarea" rows="2" placeholder="A brief description..."></textarea>
             </label>
-            <label class="edit-label">Parent
-                <select id="edit-parent" class="edit-input"></select>
-            </label>
-            <label class="edit-label">Precision
-                <select id="edit-precision" class="edit-input">
-                    <option value="year">Year</option>
-                    <option value="month">Month</option>
-                    <option value="day">Day</option>
-                    <option value="datetime">Date &amp; time</option>
-                </select>
-            </label>
-            <p class="edit-hint" id="edit-date-hint" hidden></p>
-            <label class="edit-label">Start Date
-                <input type="date" id="edit-start" class="edit-input">
-            </label>
-            <div id="edit-end-group">
-                <label class="edit-label">End Date
-                    <input type="date" id="edit-end" class="edit-input">
-                </label>
-            </div>
-            <label class="edit-label">Notes
-                <textarea id="edit-notes" class="edit-input edit-textarea" rows="2"></textarea>
-            </label>
-
-            <p class="edit-error" id="edit-error" role="alert" hidden></p>
-
-            <div class="edit-modal-buttons" id="edit-main-buttons">
-                <button id="edit-delete-btn" class="edit-btn edit-btn-danger-text">Delete</button>
-                <span class="edit-buttons-spacer"></span>
-                <button id="edit-cancel-btn" class="edit-btn edit-btn-cancel">Cancel</button>
-                <button id="edit-save-btn" class="edit-btn edit-btn-save">Save</button>
-            </div>
-
-            <div class="edit-delete-confirm" id="edit-delete-confirm" hidden>
-                <p class="edit-delete-warning" id="edit-delete-warning"></p>
-                <label class="edit-check" id="edit-delete-children-row" hidden>
-                    <input type="checkbox" id="edit-delete-children">
-                    <span id="edit-delete-children-text"></span>
-                </label>
-                <div class="edit-modal-buttons">
-                    <button id="edit-delete-cancel" class="edit-btn edit-btn-cancel">Cancel</button>
-                    <button id="edit-delete-confirm-btn" class="edit-btn edit-btn-danger">Delete</button>
-                </div>
+            <div class="edit-modal-buttons">
+                <button id="new-project-cancel" class="edit-btn edit-btn-cancel">Cancel</button>
+                <button id="new-project-create" class="edit-btn edit-btn-save">Create</button>
             </div>
         </div>
     </div>
 
-    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/projects-main.js"></script>
 </body>
 </html>

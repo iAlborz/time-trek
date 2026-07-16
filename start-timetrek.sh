@@ -3,14 +3,14 @@
 #
 # The app is plain HTML/CSS/JS with no build step, but it loads its JavaScript as
 # ES modules — and browsers refuse to load modules over file://, so opening
-# index.html directly will not work. Hence the tiny local server.
+# the page directly will not work. Hence the tiny local server.
 #
 # macOS users: double-click "Start TimeTrek.command" instead of running this.
 
 set -u
 cd "$(dirname "$0")" || exit 1
 
-URL_PATH="projects.html"
+URL_PATH=""
 
 # --- pick a port that's actually free -----------------------------------------
 PORT=""

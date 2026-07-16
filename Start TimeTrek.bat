@@ -2,14 +2,14 @@
 REM Double-click this file to start TimeTrek on Windows.
 REM
 REM The app has no build step, but it loads its JavaScript as ES modules, and
-REM browsers refuse to load modules over file:// — so opening index.html
+REM browsers refuse to load modules over file:// — so opening the page
 REM directly will not work. Hence this tiny local server.
 
 setlocal
 cd /d "%~dp0"
 
 set PORT=8000
-set URL=http://localhost:%PORT%/projects.html
+set URL=http://localhost:%PORT%/
 
 REM Pick whichever static file server this machine already has.
 REM Each candidate is actually executed rather than just looked up: Windows ships

@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
             timeline.start();
         }
     } else {
-        // No project context — start fresh (direct access to index.html)
+        // No project context — start fresh (direct access to timeline.html)
         timeline.start();
     }
 
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         backBtn.addEventListener('click', (e) => {
             e.preventDefault();
             saveCurrentProject();
-            window.location.href = 'projects.html';
+            window.location.href = 'index.html';
         });
     }
 
