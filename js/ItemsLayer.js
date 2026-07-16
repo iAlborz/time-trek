@@ -7,7 +7,7 @@
 // Positions come from the same TimelineData.itemLayout the canvas renderer used,
 // so this is a change of output medium, not of layout maths.
 
-const PENCIL_TOTAL = 22;     // matches the canvas renderer's pencil offset
+const PENCIL_TOTAL = 22;     // gap between an item's left edge and its pencil
 const BAR_RADIUS = 20;
 
 // Browsers cap element size around 33.5M px, and this app zooms to 2400 px/day —

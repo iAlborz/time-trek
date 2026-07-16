@@ -1,7 +1,6 @@
 // TimelineData.js — Data model, CSV parsing, item hierarchy, layout, hit testing
 
 import { parseDate, MS_PER_DAY } from './DateParser.js';
-import { PENCIL_TOTAL, PENCIL_SIZE } from './TimelineRenderer.js';
 
 export class TimelineData {
     constructor() {
@@ -351,55 +350,5 @@ export class TimelineData {
         }
 
         return { x, y: parentY, width: 8, height: 8, type: 'event' };
-    }
-
-    // ── Hit Testing ────────────────────────────────────────────────────────────
-
-    hitTest(x, y) {
-        for (const [itemId, layout] of this.itemLayout) {
-            const item = this.itemsById.get(itemId);
-            if (!item) continue;
-
-            // Check pencil icon hit first
-            let pencilCX, pencilCY;
-            if (item.type === 'duration') {
-                pencilCX = layout.x - PENCIL_TOTAL;
-                pencilCY = layout.y + layout.height / 2;
-            } else if (item.type === 'event') {
-                pencilCX = layout.x - PENCIL_TOTAL;
-                pencilCY = layout.y;
-            }
-
-            if (pencilCX !== undefined) {
-                const dist = Math.sqrt(Math.pow(x - pencilCX, 2) + Math.pow(y - pencilCY, 2));
-                if (dist <= PENCIL_SIZE / 2 + 4) {
-                    return { item, action: 'edit' };
-                }
-            }
-
-            // Check chevron area (left side of bar, around x+10) for expand/collapse
-            if (item.type === 'duration' && item.children.length > 0) {
-                const chevronX = layout.x + 10;
-                const chevronY = layout.y + layout.height / 2;
-                if (Math.abs(x - chevronX) <= 10 && Math.abs(y - chevronY) <= layout.height / 2) {
-                    return { item, action: 'toggle', hasChildren: true };
-                }
-            }
-
-            // Check item body hit
-            let clicked = false;
-            if (item.type === 'duration') {
-                clicked = x >= layout.x && x <= layout.x + layout.width &&
-                          y >= layout.y && y <= layout.y + layout.height;
-            } else if (item.type === 'event') {
-                const dist = Math.sqrt(Math.pow(x - layout.x, 2) + Math.pow(y - layout.y, 2));
-                clicked = dist <= 8;
-            }
-
-            if (clicked) {
-                return { item, action: 'toggle', hasChildren: item.children.length > 0 };
-            }
-        }
-        return null;
     }
 }

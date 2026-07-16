@@ -4,7 +4,7 @@ An interactive timeline that spans from a single hour to the entire history of t
 
 TimeTrek renders events and durations on a zoomable canvas across 15 time scales — from **Hour** all the way out to **Billion Years** — so the same timeline can hold both "Tuesday's 3pm meeting" and "the formation of Earth, 4.5 billion years ago." Items nest into hierarchies you can expand and collapse, so a decades-long life story can drill down into a single afternoon.
 
-No build step, no dependencies, no server-side anything. It's vanilla JavaScript ES modules and a `<canvas>`.
+No build step, no dependencies, no server-side anything. It's vanilla JavaScript ES modules, with items rendered as DOM and the axis drawn on a `<canvas>`.
 
 ## Quick start
 
@@ -119,9 +119,10 @@ js/
   main.js           Timeline bootstrap, button wiring
   projects-main.js  Projects page bootstrap
   sampleData.js     Demo dataset shared by both pages
-  Timeline.js       Core controller — input, hit testing, edit modal
+  Timeline.js       Core controller — input, edit modal
   TimelineData.js   Data model, CSV parsing, hierarchy, layout
-  TimelineRenderer.js  Canvas drawing
+  ItemsLayer.js     Renders items as DOM over the canvas
+  TimelineRenderer.js  Canvas drawing — the axis only
   TimelineAnimator.js  Zoom/pan easing
   TimeScale.js      The 15 scale definitions
   DateParser.js     Date parsing, including deep time
@@ -134,7 +135,15 @@ js/
 
 Issues and pull requests are welcome. There's no test suite or build tooling — verify changes by serving the app locally and exercising the flow you touched.
 
-Colours and the font stack live as custom properties in the `:root` block at the top of `style.css` — restyle there rather than editing rules individually. The button fill tokens (`--color-primary`, `--color-secondary`) are deliberately darker than `--color-brand` so white labels clear WCAG AA contrast; `--color-brand` is for display type only. The canvas renderer in `js/TimelineRenderer.js` still has its own hardcoded palette and doesn't read these tokens yet.
+Colours and the font stack live as custom properties in the `:root` block at the top of `style.css` — restyle there rather than editing rules individually. The button fill tokens (`--color-primary`, `--color-secondary`) are deliberately darker than `--color-brand` so white labels clear WCAG AA contrast; `--color-brand` is for display type only. Timeline items cycle through `--level-0..5` (bars) and `--event-0..5` (events) by nesting depth.
+
+### Why items are DOM and the axis is canvas
+
+Items are elements, so they can be styled with the tokens above, reached by keyboard and screen readers, and hit-tested by the browser. The axis stays on canvas: its tick marks are dense, redrawn every frame, and there's nothing there to inspect or read aloud.
+
+Only ~30–50 items are ever on screen at once — bars are 20px tall, and collapsed branches aren't laid out — so the DOM cost is small. Measured at 35 items: ~0.7ms per frame for layout, axis, and item updates combined, against a 16.7ms budget.
+
+`ItemsLayer` clamps each element to the viewport. Browsers cap element size near 33.5M pixels, and at maximum zoom (2400 px/day) a 42-year bar computes to ~37M px wide. Canvas didn't care because it drew off into nowhere; an element would render wrong. Corners are rounded only on ends that are genuinely the item's ends, so a clamped end doesn't read as the bar stopping at the screen edge.
 
 ## License
 
