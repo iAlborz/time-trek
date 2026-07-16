@@ -306,57 +306,66 @@ export class TimelineData {
         const firstRowY = timelineY + 50;
         const rowPitch = this.durationBarHeight + this.durationBarSpacing;
 
-        // Pack bars into rows: each one takes the topmost row where it doesn't
-        // collide horizontally, rather than every bar claiming a row of its own and
-        // marching off the bottom of the screen. Items are walked in hierarchy order,
-        // so a parent settles above its children, and siblings that don't overlap in
-        // time end up sharing a row.
+        // Pack items into rows: each takes the topmost row where its horizontal
+        // footprint is free, rather than every item claiming a row of its own and
+        // marching off the bottom of the screen. Siblings that don't overlap in time
+        // share a row.
+        //
+        // Two invariants:
+        //  - an item never sits above its parent, even when a free gap exists up
+        //    there, or the nesting would read backwards
+        //  - one pass in hierarchy order, so a parent always has a row before its
+        //    children ask for one — whatever their types
         const rows = [];   // rows[i] = occupied [left, right] spans, in screen px
 
-        const claimRow = (left, right, startRow = 0) => {
-            for (let i = startRow; i < rows.length; i++) {
+        const claimRow = (left, right, startRow) => {
+            for (let i = Math.max(startRow, 0); i < rows.length; i++) {
                 const collides = rows[i].some(span => left < span.right && right > span.left);
                 if (!collides) {
                     rows[i].push({ left, right });
                     return i;
                 }
             }
+            // Nothing free at or below startRow — open a new row beneath everything
+            while (rows.length < startRow) rows.push([]);
             rows.push([{ left, right }]);
             return rows.length - 1;
         };
 
         visibleItems.forEach(item => {
-            if (item.type !== 'duration') return;
-            const layout = this._calcDurationPosition(item, centerX, pixelsPerDay, offset, centerTime);
-            if (!layout) return;
+            let layout;
+            let left;
+            let right;
 
-            // The footprint runs wider than the bar: the pencil hangs off the left,
-            // and bars need a gap so they don't read as one continuous run.
-            const left = layout.x - this.barGutterLeft;
-            const right = layout.x + layout.width + this.barGapX;
+            if (item.type === 'duration') {
+                layout = this._calcDurationPosition(item, centerX, pixelsPerDay, offset, centerTime);
+                if (!layout) return;
+                // The footprint runs wider than the bar: the pencil hangs off the
+                // left, and bars need a gap or they read as one continuous run.
+                left = layout.x - this.barGutterLeft;
+                right = layout.x + layout.width + this.barGapX;
+            } else if (item.type === 'event') {
+                layout = this._calcEventPosition(item, centerX, pixelsPerDay, offset, centerTime);
+                if (!layout) return;
+                // Dot plus its label to the right, and the pencil hanging off the left
+                left = layout.x - this.barGutterLeft;
+                right = layout.x + this.eventLabelOffset + this._measureLabel(item.name) + this.barGapX;
+            } else {
+                return;
+            }
 
-            layout.y = firstRowY + claimRow(left, right) * rowPitch;
-            layout.height = this.durationBarHeight;
-            this.itemLayout.set(item.id, layout);
-        });
-
-        // Events join the same grid, starting just below their parent so they stay
-        // visually owned by it. Packing bars alone isn't enough: bars now move up,
-        // so anything still positioned relative to a parent lands on top of them.
-        visibleItems.forEach(item => {
-            if (item.type !== 'event') return;
-            const layout = this._calcEventPosition(item, centerX, pixelsPerDay, offset, centerTime);
-            if (!layout) return;
-
+            // The row is stored rather than derived back out of y: events sit centred
+            // in their row, so y alone doesn't round-trip cleanly.
             const parentLayout = item.parentId ? this.itemLayout.get(item.parentId) : null;
-            const parentRow = parentLayout ? Math.round((parentLayout.y - firstRowY) / rowPitch) : -1;
+            const row = claimRow(left, right, parentLayout ? parentLayout.row + 1 : 0);
 
-            // Dot plus its label to the right, and the pencil hanging off the left
-            const left = layout.x - this.barGutterLeft;
-            const right = layout.x + this.eventLabelOffset + this._measureLabel(item.name) + this.barGapX;
-
-            const row = claimRow(left, right, parentRow + 1);
-            layout.y = firstRowY + row * rowPitch + this.durationBarHeight / 2;   // centred in the row
+            layout.row = row;
+            layout.y = firstRowY + row * rowPitch;
+            if (item.type === 'duration') {
+                layout.height = this.durationBarHeight;
+            } else {
+                layout.y += this.durationBarHeight / 2;   // centre the dot in its row
+            }
             this.itemLayout.set(item.id, layout);
         });
     }
