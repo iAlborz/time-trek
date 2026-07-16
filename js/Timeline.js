@@ -677,7 +677,7 @@ export class Timeline {
         const isEdit = !!item;
 
         const nameInput = document.getElementById('edit-name');
-        const typeSelect = document.getElementById('edit-type');
+        const typeGroup = document.getElementById('edit-type');
         const startInput = document.getElementById('edit-start');
         const endGroup = document.getElementById('edit-end-group');
         const endInput = document.getElementById('edit-end');
@@ -694,7 +694,7 @@ export class Timeline {
 
         if (isEdit) {
             nameInput.value = item.name;
-            typeSelect.value = item.type;
+            this._setEditType(item.type);
             notesInput.value = item.notes || '';
             const startDate = item.type === 'duration' ? item.startDate : item.date;
             startInput.value = this._valueForInput(item._startDateStr, startDate, precision);
@@ -703,16 +703,17 @@ export class Timeline {
                 : '';
         } else {
             nameInput.value = '';
-            typeSelect.value = 'event';
+            this._setEditType('event');
             notesInput.value = '';
             startInput.value = prefillDate ? this._fromDate({ date: prefillDate }, precision) : '';
             endInput.value = '';
         }
 
-        endGroup.style.display = typeSelect.value === 'duration' ? 'block' : 'none';
-        typeSelect.onchange = () => {
-            endGroup.style.display = typeSelect.value === 'duration' ? 'block' : 'none';
+        const syncEndField = () => {
+            endGroup.style.display = this._editType() === 'duration' ? 'block' : 'none';
         };
+        syncEndField();
+        typeGroup.onchange = syncEndField;   // change bubbles from the radios
 
         this._populateParentSelect(item);
         this._setModalError('');
@@ -866,6 +867,17 @@ export class Timeline {
         select.value = item && item.parentId ? item.parentId : '';
     }
 
+    // The Type control is a segmented radio group, so there's no .value to read
+    _editType() {
+        const checked = document.querySelector('input[name="edit-item-type"]:checked');
+        return checked ? checked.value : 'event';
+    }
+
+    _setEditType(value) {
+        const el = document.getElementById(`edit-type-${value}`);
+        if (el) el.checked = true;
+    }
+
     _setModalError(message) {
         const el = document.getElementById('edit-error');
         el.textContent = message;
@@ -879,7 +891,7 @@ export class Timeline {
         const isEdit = !!itemId;
 
         const name = document.getElementById('edit-name').value.trim();
-        const type = document.getElementById('edit-type').value;
+        const type = this._editType();
         const parentId = document.getElementById('edit-parent').value;
         const startStr = document.getElementById('edit-start').value;
         const endStr = document.getElementById('edit-end').value;

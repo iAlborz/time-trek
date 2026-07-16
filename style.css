@@ -542,6 +542,60 @@ body.projects-page {
     border-color: var(--color-primary);
 }
 
+/* ── Segmented control ─────────────────────────────────────────────────────
+   Real radios under the paint: native arrow-key navigation, native form
+   semantics, and a screen reader announces "Type, Duration, radio, 1 of 2".
+   Buttons with a class would have looked identical and carried none of it. */
+
+.segmented {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    padding: 3px;
+    background-color: var(--color-surface-sunken);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+}
+
+/* Hidden, not removed: display:none or visibility:hidden would drop it from the
+   tab order and the accessibility tree along with the appearance. */
+.segmented-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.segmented-option {
+    flex: 1;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.segmented-option:hover {
+    color: var(--color-text);
+}
+
+.segmented-input:checked + .segmented-option {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* The input itself is 1px, so its focus ring would be invisible — show it here */
+.segmented-input:focus-visible + .segmented-option {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+}
+
 .edit-textarea {
     resize: vertical;
     min-height: 40px;

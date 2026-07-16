@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeTrek - Interactive Timeline</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=23">
+    <link rel="stylesheet" href="style.css?v=24">
 </head>
 <body class="timeline-page">
     <div class="container">
@@ -96,12 +96,16 @@
             <label class="edit-label">Name
                 <input type="text" id="edit-name" class="edit-input">
             </label>
-            <label class="edit-label">Type
-                <select id="edit-type" class="edit-input">
-                    <option value="duration">Duration</option>
-                    <option value="event">Event</option>
-                </select>
-            </label>
+            <div class="edit-label">Type
+                <div class="segmented" id="edit-type" role="radiogroup" aria-label="Type">
+                    <input class="segmented-input" type="radio" name="edit-item-type"
+                           id="edit-type-duration" value="duration">
+                    <label class="segmented-option" for="edit-type-duration">Duration</label>
+                    <input class="segmented-input" type="radio" name="edit-item-type"
+                           id="edit-type-event" value="event">
+                    <label class="segmented-option" for="edit-type-event">Event</label>
+                </div>
+            </div>
             <label class="edit-label">Parent
                 <select id="edit-parent" class="edit-input"></select>
             </label>
