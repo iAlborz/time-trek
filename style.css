@@ -316,6 +316,24 @@ body.projects-page {
     opacity: 1;
 }
 
+/* Too narrow to hold both controls: the chevron wins, since expanding an item
+   matters more than editing it and the pencil would sit right on top.
+   pointer-events goes at all times, not just on hover — an opacity:0 element still
+   swallows clicks, so the invisible pencil was eating the chevron's. */
+.tl-pencil[data-cramped] {
+    pointer-events: none;
+}
+
+.tl-bar:hover .tl-pencil[data-cramped] {
+    opacity: 0;
+}
+
+/* Still reachable by keyboard, so a short bar is fiddly rather than uneditable */
+.tl-bar .tl-pencil[data-cramped]:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .tl-pencil:hover { color: var(--color-text); }
 
 /* A dot has no inside, so its pencil hangs off the left as before */

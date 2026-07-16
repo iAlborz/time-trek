@@ -9,6 +9,8 @@
 
 const BAR_RADIUS = 4;
 const PENCIL_INSET = 18;     // pencil's distance from a bar's visible right edge
+const CHEVRON_RIGHT = 17;    // the chevron button occupies left:3 .. 17
+const PENCIL_MIN_GAP = 3;    // clearance the pencil needs beside the chevron
 
 // Browsers cap element size around 33.5M px, and this app zooms to 2400 px/day —
 // a 42-year bar computes to ~36.8M px wide, past the cap. Canvas didn't care since
@@ -135,6 +137,13 @@ export class ItemsLayer {
         const visibleRight = Math.min(layout.x + layout.width, vw);
         const pencilLeft = Math.max(visibleRight - left - PENCIL_INSET, 0);
         this._setStyle(pencil, 'left', `${pencilLeft}px`);
+
+        // On a short bar the pencil lands on top of the chevron and swallows it, so
+        // the item can't be expanded at all. Expanding is the more important of the
+        // two, so the pencil gives way. It stays focusable — see the CSS — or these
+        // items would become uneditable by keyboard rather than merely fiddly.
+        const minPencilLeft = hasKids ? CHEVRON_RIGHT + PENCIL_MIN_GAP : 4;
+        this._toggleAttr(pencil, 'data-cramped', pencilLeft < minPencilLeft);
     }
 
     _renderEvent(item, layout, vw) {
@@ -193,6 +202,12 @@ export class ItemsLayer {
 
     _setAttr(el, name, value) {
         if (el.getAttribute(name) !== value) el.setAttribute(name, value);
+    }
+
+    _toggleAttr(el, name, on) {
+        if (on === el.hasAttribute(name)) return;
+        if (on) el.setAttribute(name, '');
+        else el.removeAttribute(name);
     }
 
     clear() {
