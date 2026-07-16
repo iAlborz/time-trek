@@ -26,18 +26,25 @@ export class ItemsLayer {
     render(state) {
         const vw = window.innerWidth;
         this._seen.clear();
+        const order = [];
+        let structureChanged = false;
 
         for (const [itemId, layout] of state.itemLayout) {
             const item = state.itemsById.get(itemId);
             if (!item) continue;
 
+            const existed = this.nodes.has(itemId);
             if (item.type === 'duration') {
                 if (layout.x + layout.width < -CLAMP_PAD || layout.x > vw + CLAMP_PAD) continue;
                 this._renderBar(item, layout, state, vw);
             } else if (item.type === 'event') {
                 if (layout.x < -50 || layout.x > vw + 50) continue;
                 this._renderEvent(item, layout, vw);
+            } else {
+                continue;
             }
+            if (!existed) structureChanged = true;
+            order.push(itemId);
             this._seen.add(itemId);
         }
 
@@ -46,7 +53,26 @@ export class ItemsLayer {
             if (this._seen.has(id)) continue;
             Object.values(node).forEach(el => el && el.remove());
             this.nodes.delete(id);
+            structureChanged = true;
         }
+
+        // Nodes are created as items scroll into view, so DOM order drifts from the
+        // hierarchy. Tab order follows DOM order, so re-sort — but only when the set
+        // actually changed, not on every pan frame.
+        if (structureChanged) this._reorder(order);
+    }
+
+    // Pencil before bar, matching how they read left-to-right on screen
+    _reorder(order) {
+        const seq = [];
+        for (const id of order) {
+            const node = this.nodes.get(id);
+            if (!node) continue;
+            if (node.pencil) seq.push(node.pencil);
+            if (node.bar) seq.push(node.bar);
+            if (node.dot) seq.push(node.dot);
+        }
+        if (seq.length) this.host.append(...seq);
     }
 
     _renderBar(item, layout, state, vw) {
@@ -55,10 +81,11 @@ export class ItemsLayer {
             const bar = document.createElement('div');
             bar.className = 'tl-bar';
             bar.innerHTML =
-                '<span class="tl-chevron" aria-hidden="true">' +
+                '<button type="button" class="tl-chevron">' +
                 '<svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5" ' +
-                'stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 1 5.5 4 2.5 7"/></svg>' +
-                '</span><span class="tl-name"></span>';
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<path d="M2.5 1 5.5 4 2.5 7"/></svg>' +
+                '</button><span class="tl-name" aria-hidden="true"></span>';
             const pencil = this._makePencil();
             bar.dataset.itemId = item.id;
             pencil.dataset.itemId = item.id;
@@ -87,7 +114,13 @@ export class ItemsLayer {
         const expanded = state.expandedItems.has(item.id);
         const chevron = bar.firstChild;
         this._setAttr(chevron, 'data-state', hasKids ? (expanded ? 'expanded' : 'collapsed') : 'none');
-        this._setStyle(chevron, 'left', `${layout.x - left + 6}px`);
+        // The button is 14px wide for a usable hit target; offset so the glyph still
+        // centres on x+10, where the canvas drew it.
+        this._setStyle(chevron, 'left', `${layout.x - left + 3}px`);
+        if (hasKids) {
+            this._setAttr(chevron, 'aria-expanded', String(expanded));
+            this._setAttr(chevron, 'aria-label', this._describe(item));
+        }
 
         const label = bar.lastChild;
         // Text sits at the bar's true left, so a clamped bar's label stays off-screen
@@ -95,6 +128,7 @@ export class ItemsLayer {
         this._setStyle(label, 'left', `${layout.x - left + (hasKids ? 18 : 5)}px`);
         if (label.textContent !== item.name) label.textContent = item.name;
 
+        this._setAttr(pencil, 'aria-label', `Edit ${this._describe(item)}`);
         this._placePencil(pencil, layout.x, layout.y + layout.height / 2, vw);
     }
 
@@ -119,16 +153,29 @@ export class ItemsLayer {
         const label = dot.firstChild;
         if (label.textContent !== item.name) label.textContent = item.name;
 
+        this._setAttr(pencil, 'aria-label', `Edit ${this._describe(item)}`);
         this._placePencil(pencil, layout.x, layout.y, vw);
     }
 
+    // Screen-reader description. The visible name is aria-hidden and may be clipped
+    // by a narrow bar, so the dates go here where they're always available.
+    _describe(item) {
+        const start = item._startDateStr || '';
+        if (item.type === 'duration') {
+            const end = item._endDateStr;
+            const when = end ? `${start} to ${end}` : `from ${start}`;
+            return `${item.name}, duration, ${when}`;
+        }
+        return `${item.name}, event, ${start}`;
+    }
+
     _makePencil() {
-        const el = document.createElement('span');
+        const el = document.createElement('button');
+        el.type = 'button';
         el.className = 'tl-pencil';
-        el.setAttribute('aria-hidden', 'true');
         el.innerHTML =
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
-            'stroke-linecap="round" stroke-linejoin="round">' +
+            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
             '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352' +
             'a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>';
         return el;

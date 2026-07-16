@@ -120,13 +120,19 @@ body.projects-page {
 .tl-bar[data-level="4"] { background-color: var(--level-4); }
 .tl-bar[data-level="5"] { background-color: var(--level-5); }
 
+/* A real <button>, so it needs the UA styles stripped */
 .tl-chevron {
     position: absolute;
     top: 50%;
-    width: 8px;
-    height: 8px;
-    margin-top: -4px;
+    width: 14px;
+    height: 14px;
+    margin-top: -7px;
+    padding: 3px;
+    background: none;
+    border: none;
     color: var(--color-text);
+    cursor: pointer;
+    pointer-events: auto;
     transition: transform 0.15s ease;
 }
 
@@ -185,6 +191,9 @@ body.projects-page {
     width: 14px;
     height: 14px;
     margin: -7px 0 0 -7px;   /* positioned by its centre, as the canvas drew it */
+    padding: 0;
+    background: none;
+    border: none;
     color: var(--color-text-subtle);
     pointer-events: auto;
     cursor: pointer;
