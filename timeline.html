@@ -5,26 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeTrek - Interactive Timeline</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=19">
+    <link rel="stylesheet" href="style.css?v=20">
 </head>
 <body class="timeline-page">
     <div class="container">
         <canvas id="timeline-canvas"></canvas>
         <div id="timeline-items" class="tl-items"></div>
-        <a href="index.html" id="back-btn" class="btn btn--secondary">
-            <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                <path d="M12.5 8h-9"/>
-                <path d="M7 3.5 2.5 8 7 12.5"/>
-            </svg>
-            Projects
-        </a>
 
         <input type="file" id="csv-upload" accept=".csv" style="display: none;">
         <input type="file" id="json-upload" accept=".json" style="display: none;">
 
-        <div class="top-controls">
+        <div class="top-controls top-controls--left">
+            <a href="index.html" id="back-btn" class="btn btn--quiet">
+                <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path d="M12.5 8h-9"/>
+                    <path d="M7 3.5 2.5 8 7 12.5"/>
+                </svg>
+                Projects
+            </a>
             <div class="data-menu" id="data-menu">
-                <button id="data-menu-btn" class="btn btn--secondary"
+                <button id="data-menu-btn" class="btn btn--quiet"
                         aria-haspopup="true" aria-expanded="false" aria-controls="data-menu-panel">
                     Data
                     <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -40,6 +40,9 @@
                     <button id="clear-data-btn" class="data-menu-item data-menu-item-danger" role="menuitem">Clear Data</button>
                 </div>
             </div>
+        </div>
+
+        <div class="top-controls top-controls--right">
             <button id="add-item-btn" class="btn btn--primary">
                 <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                     <path d="M8 3.5v9M3.5 8h9"/>

@@ -175,7 +175,7 @@ export class Timeline {
         // that also live there.
         const container = this.canvas.parentElement;
         const fromControls = (e) =>
-            e.target.closest && e.target.closest('.top-controls, .scale-controls, #back-btn');
+            e.target.closest && e.target.closest('.top-controls, .scale-controls');
 
         // Wheel zoom (zoom towards cursor)
         container.addEventListener('wheel', (e) => {

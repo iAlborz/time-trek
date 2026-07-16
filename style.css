@@ -343,22 +343,17 @@ body.projects-page {
 
 /* Fixed, not absolute — .container is a flex parent that can exceed the viewport,
    and would otherwise lay these out as flex children in the middle of the screen. */
-#back-btn {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 100;
-}
-
 .top-controls {
     position: fixed;
     top: 20px;
-    right: 20px;
     display: flex;
     align-items: flex-start;
     gap: 8px;
     z-index: 100;
 }
+
+.top-controls--left { left: 20px; }
+.top-controls--right { right: 20px; }
 
 /* Stays position:fixed with left/right 12px — .container is a flex parent that can
    exceed the viewport, so an absolutely positioned bar overflows it. Those two edges
@@ -403,7 +398,7 @@ body.projects-page {
     display: none;
     position: absolute;
     top: calc(100% + 8px);
-    right: 0;
+    left: 0;                 /* the trigger sits on the left now, so open rightward */
     min-width: 190px;
     background: var(--color-surface);
     border: 1px solid var(--color-border-subtle);
