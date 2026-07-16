@@ -86,7 +86,7 @@ export class ItemsLayer {
                 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                 '<path d="M2.5 1 5.5 4 2.5 7"/></svg>' +
                 '</button><span class="tl-name" aria-hidden="true"></span>';
-            const pencil = this._makePencil();
+            const pencil = this._makeMenuButton();
             bar.dataset.itemId = item.id;
             pencil.dataset.itemId = item.id;
             bar.appendChild(pencil);          // lives inside the bar now
@@ -129,7 +129,7 @@ export class ItemsLayer {
         this._setStyle(label, 'left', `${layout.x - left + (hasKids ? 18 : 5)}px`);
         if (label.textContent !== item.name) label.textContent = item.name;
 
-        this._setAttr(pencil, 'aria-label', `Edit ${this._describe(item)}`);
+        this._setAttr(pencil, 'aria-label', `Actions for ${this._describe(item)}`);
 
         // Pin to the bar's visible right edge, not its true one: a bar wider than the
         // screen is clamped, so a true-right pencil would sit off-screen and be
@@ -152,7 +152,7 @@ export class ItemsLayer {
             const dot = document.createElement('div');
             dot.className = 'tl-event';
             dot.innerHTML = '<span class="tl-event-name"></span>';
-            const pencil = this._makePencil();
+            const pencil = this._makeMenuButton();
             dot.dataset.itemId = item.id;
             pencil.dataset.itemId = item.id;
             dot.appendChild(pencil);          // a dot has no inside, so it hangs left
@@ -168,7 +168,7 @@ export class ItemsLayer {
         const label = dot.querySelector('.tl-event-name');
         if (label.textContent !== item.name) label.textContent = item.name;
 
-        this._setAttr(pencil, 'aria-label', `Edit ${this._describe(item)}`);
+        this._setAttr(pencil, 'aria-label', `Actions for ${this._describe(item)}`);
     }
 
     // Screen-reader description. The visible name is aria-hidden and may be clipped
@@ -183,15 +183,17 @@ export class ItemsLayer {
         return `${item.name}, event, ${start}`;
     }
 
-    _makePencil() {
+    // Opens a menu rather than doing one thing, so an ellipsis, not a pencil
+    _makeMenuButton() {
         const el = document.createElement('button');
         el.type = 'button';
         el.className = 'tl-pencil';
+        el.setAttribute('aria-haspopup', 'true');
+        el.setAttribute('aria-expanded', 'false');
         el.innerHTML =
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
-            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-            '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352' +
-            'a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>';
+            '<svg viewBox="0 0 16 16" fill="currentColor" stroke="none" aria-hidden="true">' +
+            '<circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/>' +
+            '</svg>';
         return el;
     }
 

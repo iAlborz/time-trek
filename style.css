@@ -312,7 +312,8 @@ body.projects-page {
 
 .tl-bar:hover .tl-pencil,
 .tl-event:hover .tl-pencil,
-.tl-pencil:focus-visible {
+.tl-pencil:focus-visible,
+.tl-pencil[aria-expanded="true"] {
     opacity: 1;
 }
 
@@ -326,6 +327,11 @@ body.projects-page {
 
 .tl-bar:hover .tl-pencil[data-cramped] {
     opacity: 0;
+}
+
+.tl-pencil[data-cramped][aria-expanded="true"] {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* Still reachable by keyboard, so a short bar is fiddly rather than uneditable */
@@ -354,6 +360,17 @@ body.projects-page {
 
 .top-controls--left { left: 20px; }
 .top-controls--right { right: 20px; }
+
+/* One menu, moved to whichever item was clicked — 39 items would otherwise mean 39
+   panels sitting in the DOM. Fixed rather than absolute: it has no relative parent. */
+.item-menu {
+    position: fixed;
+    z-index: 200;
+}
+
+.item-menu[hidden] {
+    display: none;
+}
 
 /* Sits above the scale bar without being inside it, so the bar's own layout is
    untouched. Its bottom offset tracks the bar's real height — see ItemsLayer's
@@ -411,11 +428,7 @@ body.projects-page {
     position: relative;
 }
 
-.data-menu-panel {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;                 /* the trigger sits on the left now, so open rightward */
+.menu {
     min-width: 190px;
     background: var(--color-surface);
     border: 1px solid var(--color-border-subtle);
@@ -424,11 +437,19 @@ body.projects-page {
     padding: 6px;
 }
 
+/* Anchored under its trigger, shown when the trigger opens */
+.data-menu-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;                 /* the trigger sits on the left now, so open rightward */
+}
+
 .data-menu.open .data-menu-panel {
     display: block;
 }
 
-.data-menu-item {
+.menu-item {
     display: block;
     width: 100%;
     text-align: left;
@@ -444,21 +465,21 @@ body.projects-page {
     transition: background-color 0.15s ease;
 }
 
-.data-menu-item:hover {
+.menu-item:hover {
     background-color: var(--color-surface-muted);
 }
 
-.data-menu-separator {
+.menu-separator {
     border: none;
     border-top: 1px solid var(--color-border-subtle);
     margin: 6px 4px;
 }
 
-.data-menu-item-danger {
+.menu-item--danger {
     color: var(--color-danger);
 }
 
-.data-menu-item-danger:hover {
+.menu-item--danger:hover {
     background-color: var(--color-danger-surface);
 }
 

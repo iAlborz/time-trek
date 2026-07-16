@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setDataMenuOpen(!dataMenu.classList.contains('open'));
     });
 
-    dataMenu.querySelectorAll('.data-menu-item').forEach(item => {
+    dataMenu.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', () => setDataMenuOpen(false));
     });
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeTrek - Interactive Timeline</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=21">
+    <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body class="timeline-page">
     <div class="container">
@@ -31,13 +31,13 @@
                         <path d="M4 6.5 8 10.5l4-4"/>
                     </svg>
                 </button>
-                <div class="data-menu-panel" id="data-menu-panel" role="menu">
-                    <button id="upload-btn" class="data-menu-item" role="menuitem">Import CSV</button>
-                    <button id="import-json-btn" class="data-menu-item" role="menuitem">Import JSON</button>
-                    <button id="export-btn" class="data-menu-item" role="menuitem">Export JSON</button>
-                    <button id="sample-data-btn" class="data-menu-item" role="menuitem">Load Sample Data</button>
-                    <hr class="data-menu-separator">
-                    <button id="clear-data-btn" class="data-menu-item data-menu-item-danger" role="menuitem">Clear Data</button>
+                <div class="menu data-menu-panel" id="data-menu-panel" role="menu">
+                    <button id="upload-btn" class="menu-item" role="menuitem">Import CSV</button>
+                    <button id="import-json-btn" class="menu-item" role="menuitem">Import JSON</button>
+                    <button id="export-btn" class="menu-item" role="menuitem">Export JSON</button>
+                    <button id="sample-data-btn" class="menu-item" role="menuitem">Load Sample Data</button>
+                    <hr class="menu-separator">
+                    <button id="clear-data-btn" class="menu-item menu-item--danger" role="menuitem">Clear Data</button>
                 </div>
             </div>
         </div>
@@ -50,6 +50,12 @@
                 Add Item
             </button>
             <button id="today-btn" class="btn btn--primary">Today</button>
+        </div>
+
+        <div class="menu item-menu" id="item-menu" role="menu" hidden>
+            <button class="menu-item" role="menuitem" data-item-action="edit">Edit</button>
+            <button class="menu-item" role="menuitem" data-item-action="fit">Zoom to fit</button>
+            <button class="menu-item" role="menuitem" data-item-action="expand">Open all children</button>
         </div>
 
         <p class="timeline-readout" id="timeline-readout"></p>

@@ -175,7 +175,7 @@ export class Timeline {
         // that also live there.
         const container = this.canvas.parentElement;
         const fromControls = (e) =>
-            e.target.closest && e.target.closest('.top-controls, .scale-controls');
+            e.target.closest && e.target.closest('.top-controls, .scale-controls, .item-menu');
 
         // Wheel zoom (zoom towards cursor)
         container.addEventListener('wheel', (e) => {
@@ -250,7 +250,8 @@ export class Timeline {
                 if (!item) return;
 
                 if (target.classList.contains('tl-pencil')) {
-                    this.showEditModal(item);
+                    e.stopPropagation();   // don't let the document handler close it again
+                    this.toggleItemMenu(item, target);
                     return;
                 }
                 if (item.children.length > 0) {
@@ -260,6 +261,28 @@ export class Timeline {
                 }
             });
         }
+
+        // Item menu: actions, and the usual ways of dismissing it
+        const itemMenu = document.getElementById('item-menu');
+        if (itemMenu) {
+            itemMenu.addEventListener('click', (e) => {
+                const action = e.target.closest('[data-item-action]');
+                if (action) this.runItemMenuAction(action.dataset.itemAction);
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            // the trigger's own handler toggles; let it, or we'd close then reopen
+            if (e.target.closest('#item-menu, .tl-pencil')) return;
+            this.closeItemMenu();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const anchor = this._menuAnchor;
+            this.closeItemMenu();
+            if (anchor) anchor.focus();
+        });
 
         // Double-click empty space to create an item at that point in time
         container.addEventListener('dblclick', (e) => {
@@ -970,6 +993,120 @@ export class Timeline {
         this._rebuild();
         modal.classList.remove('visible');
         return true;
+    }
+
+    // ── Item Menu ──────────────────────────────────────────────────────────────
+
+    // One shared menu, moved to whichever trigger was clicked.
+    toggleItemMenu(item, anchor) {
+        if (this._menuItemId === item.id && !this._itemMenu().hidden) {
+            this.closeItemMenu();
+            return;
+        }
+        this.openItemMenu(item, anchor);
+    }
+
+    openItemMenu(item, anchor) {
+        const menu = this._itemMenu();
+        if (!menu) return;
+
+        this.closeItemMenu();
+        this._menuItemId = item.id;
+        this._menuAnchor = anchor;
+        anchor.setAttribute('aria-expanded', 'true');
+
+        // "Open all children" is meaningless on a leaf
+        const expand = menu.querySelector('[data-item-action="expand"]');
+        if (expand) expand.hidden = item.children.length === 0;
+
+        menu.hidden = false;
+
+        // Place under the trigger, nudged back inside the viewport if it would spill.
+        const a = anchor.getBoundingClientRect();
+        const m = menu.getBoundingClientRect();
+        const left = Math.min(Math.max(a.left, 8), window.innerWidth - m.width - 8);
+        const below = a.bottom + 6;
+        const top = below + m.height > window.innerHeight - 8 ? a.top - m.height - 6 : below;
+        menu.style.left = `${Math.round(left)}px`;
+        menu.style.top = `${Math.round(Math.max(top, 8))}px`;
+    }
+
+    closeItemMenu() {
+        const menu = this._itemMenu();
+        if (!menu || menu.hidden) return;
+        menu.hidden = true;
+        if (this._menuAnchor) this._menuAnchor.setAttribute('aria-expanded', 'false');
+        this._menuAnchor = null;
+        this._menuItemId = null;
+    }
+
+    runItemMenuAction(action) {
+        const item = this.data.itemsById.get(this._menuItemId);
+        const anchor = this._menuAnchor;
+        this.closeItemMenu();
+        if (!item) return false;
+
+        if (action === 'edit') {
+            this.showEditModal(item);
+            return true;
+        }
+        if (action === 'fit') {
+            return this.zoomToItem(item);
+        }
+        if (action === 'expand') {
+            this.expandAll(item);
+            if (anchor) anchor.focus();
+            return true;
+        }
+        return false;
+    }
+
+    _itemMenu() {
+        if (this._itemMenuEl === undefined) this._itemMenuEl = document.getElementById('item-menu');
+        return this._itemMenuEl;
+    }
+
+    // Frame one item and everything under it
+    zoomToItem(item) {
+        const extent = this._subtreeExtent(item);
+        if (!extent) return false;
+
+        this.zoomCursorX = undefined;   // see zoomToFit: a stale anchor fights the pan
+        const span = extent.max - extent.min;
+
+        // An instant has no span to fit, so hold the zoom and just centre on it
+        if (span > 0) {
+            this.targetZoom = Math.max(0.0000000001, Math.min(window.innerWidth / (span * 1.15), 2400));
+            this.animator.startZoom(this.zoom, this.targetZoom);
+        }
+        this.targetOffset = this.constrainOffset((extent.min + extent.max) / 2);
+        this.animator.startPan(this.offset, this.targetOffset, (o) => this.constrainOffset(o));
+        return true;
+    }
+
+    _subtreeExtent(item) {
+        let min = Infinity;
+        let max = -Infinity;
+        const walk = (node) => {
+            const start = node.type === 'duration' ? node.startDate : node.date;
+            const end = node.type === 'duration' ? (node.endDate || node.startDate) : node.date;
+            if (start) min = Math.min(min, start.dayOffset);
+            if (end) max = Math.max(max, end.dayOffset);
+            (node.children || []).forEach(walk);
+        };
+        walk(item);
+        return isFinite(min) && isFinite(max) ? { min, max } : null;
+    }
+
+    expandAll(item) {
+        const walk = (node) => {
+            if (!node.children || node.children.length === 0) return;
+            this.data.expandedItems.add(node.id);
+            node.children.forEach(walk);
+        };
+        walk(item);
+        this.data.calculateLayout(this.zoom, this.offset, this.centerDate, window.innerWidth, window.innerHeight);
+        this.draw();
     }
 
     getCurrentModalItem() {
