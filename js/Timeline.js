@@ -5,6 +5,7 @@ import { parseDate, MS_PER_DAY } from './DateParser.js';
 import { TimelineData } from './TimelineData.js';
 import { TimelineRenderer } from './TimelineRenderer.js';
 import { TimelineAnimator } from './TimelineAnimator.js';
+import { ItemsLayer } from './ItemsLayer.js';
 
 // How precisely a date is expressed. Not stored as its own field — the date string
 // already encodes it ("2025" / "2025-03" / "2025-03-01" / "2025-03-01T14:30") and
@@ -42,6 +43,10 @@ export class Timeline {
         // Modules
         this.data = new TimelineData();
         this.renderer = new TimelineRenderer(canvas);
+
+        // Items render as DOM over the canvas; the canvas keeps the axis
+        const itemsHost = document.getElementById('timeline-items');
+        this.itemsLayer = itemsHost ? new ItemsLayer(itemsHost) : null;
         this.animator = new TimelineAnimator((update) => this._onAnimationFrame(update));
 
         this.canvas = canvas;
@@ -478,7 +483,7 @@ export class Timeline {
         const markers = this.getMarkers();
         const formattedCenterDate = this._formatCurrentCenterDate(currentScale);
 
-        this.renderer.draw({
+        const state = {
             zoom: this.zoom,
             offset: this.offset,
             centerDate: this.centerDate,
@@ -490,7 +495,10 @@ export class Timeline {
             itemLayout: this.data.itemLayout,
             itemsById: this.data.itemsById,
             expandedItems: this.data.expandedItems
-        });
+        };
+
+        this.renderer.draw(state);          // axis
+        if (this.itemsLayer) this.itemsLayer.render(state);   // items
 
         this.updateActiveScaleButton();
     }

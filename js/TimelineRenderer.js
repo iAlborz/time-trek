@@ -13,6 +13,10 @@ export class TimelineRenderer {
         this.ctx = canvas.getContext('2d');
         this.devicePixelRatio = 1;
         this.pencilImg = null;
+        // Items are drawn by ItemsLayer as DOM now; the canvas keeps the axis.
+        // The item-drawing code below stays until the DOM layer is proven at both
+        // zoom extremes, so this can be flipped back in one line.
+        this.drawItems = false;
         this._loadPencilIcon();
         this.setupCanvas();
     }
@@ -44,7 +48,7 @@ export class TimelineRenderer {
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Duration bars (below timeline)
-        this._drawDurationBars(state);
+        if (this.drawItems) this._drawDurationBars(state);
 
         // Timeline base line
         ctx.strokeStyle = '#d0d0d0';
@@ -55,7 +59,7 @@ export class TimelineRenderer {
         ctx.stroke();
 
         // Events
-        this._drawEvents(state);
+        if (this.drawItems) this._drawEvents(state);
 
         // Markers
         this._drawMarkers(state.markers, timelineY, ctx, state.currentScale, state.scales);
