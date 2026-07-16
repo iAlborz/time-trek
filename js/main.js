@@ -105,6 +105,21 @@ document.addEventListener('DOMContentLoaded', () => {
         debouncedSave();
     });
 
+    // ── Readout ─────────────────────────────────────────────────────────────────
+    // It sits just above the scale bar without being part of it. The bar's height
+    // isn't fixed — it wraps to two rows on a narrow screen, and its width shifts as
+    // the scale window slides — so follow its real height instead of guessing an
+    // offset. ResizeObserver rather than a per-frame read, which would force layout.
+    const scaleBar = document.querySelector('.scale-controls');
+    const readout = document.getElementById('timeline-readout');
+    if (scaleBar && readout && window.ResizeObserver) {
+        const BAR_BOTTOM = 12;   // matches .scale-controls
+        const GAP = 8;
+        new ResizeObserver(() => {
+            readout.style.bottom = `${BAR_BOTTOM + scaleBar.offsetHeight + GAP}px`;
+        }).observe(scaleBar);
+    }
+
     // ── Add Item ────────────────────────────────────────────────────────────────
     document.getElementById('add-item-btn').addEventListener('click', () => {
         // Prefill with whatever date is currently centred on screen

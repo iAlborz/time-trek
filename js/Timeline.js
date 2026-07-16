@@ -557,6 +557,7 @@ export class Timeline {
         if (this.itemsLayer) this.itemsLayer.render(state);   // items
 
         this.updateActiveScaleButton();
+        this._updateReadout(currentScale);
     }
 
     _formatCurrentCenterDate(currentScale) {
@@ -623,6 +624,14 @@ export class Timeline {
             btn.hidden = i === undefined || i < start || i > end;
             btn.classList.toggle('active', btn.dataset.scale === currentScale.unit);
         });
+    }
+
+    // One line, quiet: it's a debug readout, not part of the timeline
+    _updateReadout(currentScale) {
+        if (this._readout === undefined) this._readout = document.getElementById('timeline-readout');
+        if (!this._readout) return;
+        const text = `Zoom: ${this.zoom.toFixed(3)}x · Scale: ${currentScale.unit}`;
+        if (this._readout.textContent !== text) this._readout.textContent = text;
     }
 
     // Cached: this runs every frame while panning and zooming

@@ -52,13 +52,6 @@ export class TimelineRenderer {
         ctx.textAlign = 'center';
         ctx.fillText(state.formattedCenterDate, width / 2, timelineY + 40);
 
-        // Zoom info
-        ctx.fillStyle = '#aaaaaa';
-        ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(`Zoom: ${state.zoom.toFixed(3)}x`, 10, 20);
-        ctx.fillText(`Scale: ${state.currentScale.unit}`, 10, 35);
-
         // Big Bang indicator
         if (state.offset <= -state.bigBangLimitDays * 0.9) {
             ctx.fillStyle = '#FF6B6B';

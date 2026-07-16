@@ -355,6 +355,23 @@ body.projects-page {
 .top-controls--left { left: 20px; }
 .top-controls--right { right: 20px; }
 
+/* Sits above the scale bar without being inside it, so the bar's own layout is
+   untouched. Its bottom offset tracks the bar's real height — see ItemsLayer's
+   sibling in main.js — because the bar wraps to two rows on a narrow screen and a
+   hardcoded offset would collide with it. */
+.timeline-readout {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 80px;                 /* replaced at runtime once the bar is measured */
+    margin: 0;
+    font-size: 11px;
+    color: var(--color-text-subtle);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 99;
+}
+
 /* Stays position:fixed with left/right 12px — .container is a flex parent that can
    exceed the viewport, so an absolutely positioned bar overflows it. Those two edges
    bound the box; width:fit-content then hugs the content inside them and margin auto
