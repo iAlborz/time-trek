@@ -135,7 +135,7 @@ js/
 
 Issues and pull requests are welcome. There's no test suite or build tooling — verify changes by serving the app locally and exercising the flow you touched.
 
-Colours and the font stack live as custom properties in the `:root` block at the top of `style.css` — restyle there rather than editing rules individually. The button fill tokens (`--color-primary`, `--color-secondary`) are deliberately darker than `--color-brand` so white labels clear WCAG AA contrast; `--color-brand` is for display type only. Timeline items cycle through `--level-0..5` (bars) and `--event-0..5` (events) by nesting depth.
+Colours and the font stack live as custom properties in the `:root` block at the top of `style.css` — restyle there rather than editing rules individually. Every button is the `.btn` component (`.btn--primary` / `.btn--secondary` / `.btn--quiet`, plus `.btn--sm`); its height, font size, radius and icon size are defined once there, so add a variant rather than restyling a button in place. Icons are inline SVG with `.btn-icon`, sized by the component. The button fill tokens (`--color-primary`, `--color-secondary`) are deliberately darker than `--color-brand` so white labels clear WCAG AA contrast; `--color-brand` is for display type only. Timeline items cycle through `--level-0..5` (bars) and `--event-0..5` (events) by nesting depth.
 
 ### Why items are DOM and the axis is canvas
 

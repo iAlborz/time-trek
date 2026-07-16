@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Scale Buttons ───────────────────────────────────────────────────────────
     // [data-scale] so the Fit button in the same bar isn't treated as a scale
-    document.querySelectorAll('.scale-btn[data-scale]').forEach(btn => {
+    document.querySelectorAll('[data-scale]').forEach(btn => {
         btn.addEventListener('click', () => {
             timeline.setScaleZoom(btn.dataset.scale);
         });

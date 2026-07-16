@@ -93,6 +93,110 @@ body.projects-page {
     cursor: grabbing;
 }
 
+/* ── Button ────────────────────────────────────────────────────────────────
+   Every button in the app is this component. Metrics live here, once —
+   previously each button set its own padding, radius, font size and icon
+   size, which is how four different button shapes ended up side by side. */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid transparent;   /* filled variants keep the same box as outlined */
+    border-radius: 18px;             /* half the height: a pill */
+    background: none;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;           /* the back button is an <a> */
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease,
+                box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.btn-icon {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.btn--sm {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 15px;
+    font-size: 12px;
+}
+
+.btn--sm .btn-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.btn--primary {
+    background-color: var(--color-primary);
+    color: var(--color-text-on-fill);
+    box-shadow: 0 2px 8px rgba(204, 59, 59, 0.3);
+}
+
+.btn--primary:hover {
+    background-color: var(--color-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(204, 59, 59, 0.4);
+}
+
+.btn--secondary {
+    background-color: var(--color-secondary);
+    color: var(--color-text-on-fill);
+    box-shadow: 0 2px 8px rgba(15, 122, 112, 0.3);
+}
+
+.btn--secondary:hover {
+    background-color: var(--color-secondary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 122, 112, 0.4);
+}
+
+.btn--quiet {
+    background-color: var(--color-surface-sunken);
+    border-color: var(--color-border);
+    color: var(--color-text-muted);
+}
+
+.btn--quiet:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* The selected scale — quiet buttons form a selector where one is always on */
+.btn--quiet.active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text-on-fill);
+    box-shadow: 0 2px 8px rgba(204, 59, 59, 0.3);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* An author display value beats the [hidden] attribute's UA display:none, so the
+   scale bar's hidden buttons would otherwise all stay on screen. */
+.btn[hidden] {
+    display: none;
+}
+
 /* ── Timeline items (DOM layer over the canvas) ────────────────────────────── */
 
 /* The layer itself is transparent to the pointer, so gaps between items fall
@@ -219,7 +323,15 @@ body.projects-page {
 
 .tl-pencil svg { display: block; width: 14px; height: 14px; }
 
-/* Fixed, not absolute — .container is a flex parent that can exceed the viewport */
+/* Fixed, not absolute — .container is a flex parent that can exceed the viewport,
+   and would otherwise lay these out as flex children in the middle of the screen. */
+#back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+}
+
 .top-controls {
     position: fixed;
     top: 20px;
@@ -228,31 +340,6 @@ body.projects-page {
     align-items: flex-start;
     gap: 8px;
     z-index: 100;
-}
-
-.today-button {
-    background-color: var(--color-primary);
-    color: var(--color-text-on-fill);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(204, 59, 59, 0.3);
-}
-
-.today-button:hover {
-    background-color: var(--color-primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(204, 59, 59, 0.4);
-}
-
-.today-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(204, 59, 59, 0.3);
 }
 
 /* Stays position:fixed with left/right 12px — .container is a flex parent that can
@@ -288,106 +375,10 @@ body.projects-page {
     background-color: var(--color-border);
 }
 
-.scale-btn-fit {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 600;
-}
-
-.scale-btn-fit .btn-icon {
-    width: 12px;
-    height: 12px;
-}
-
-.scale-btn {
-    background-color: var(--color-surface-sunken);
-    color: var(--color-text-muted);
-    border: 1px solid var(--color-border);
-    padding: 8px 16px;
-    border-radius: 15px;
-    font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.scale-btn:hover {
-    background-color: var(--color-surface-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.scale-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-.scale-btn.active {
-    background-color: var(--color-primary);
-    color: var(--color-text-on-fill);
-    border-color: var(--color-primary);
-    box-shadow: 0 2px 8px rgba(204, 59, 59, 0.3);
-}
-
-.data-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    background-color: var(--color-secondary);
-    color: var(--color-text-on-fill);
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(15, 122, 112, 0.3);
-}
-
-/* Icons inherit the label's colour and optical weight */
-.btn-icon {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.75;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.data-button:hover {
-    background-color: var(--color-secondary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(15, 122, 112, 0.4);
-}
-
-.data-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(15, 122, 112, 0.3);
-}
-
 /* ── Data Menu (timeline page) ─────────────────────────────────────────────── */
 
 .data-menu {
     position: relative;
-}
-
-.data-menu-trigger {
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 14px;
-}
-
-/* .data-button is now flex, so its gap handles the spacing */
-.data-menu-caret {
-    font-size: 10px;
 }
 
 .data-menu-panel {
@@ -659,24 +650,6 @@ body.projects-page {
     margin-bottom: 32px;
 }
 
-.subtle-button {
-    background-color: var(--color-surface-muted);
-    color: var(--color-text-muted);
-    border: none;
-    padding: 7px 14px;
-    border-radius: 8px;
-    font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.subtle-button:hover {
-    background-color: var(--color-surface-hover);
-    color: var(--color-text);
-}
-
 .project-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -761,30 +734,3 @@ body.projects-page {
     padding: 60px 20px;
 }
 
-/* ── Back Button (timeline page) ──────────────────────────────────────────── */
-
-.back-button {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    background-color: var(--color-secondary);
-    color: var(--color-text-on-fill);
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 500;
-    box-shadow: 0 2px 8px rgba(15, 122, 112, 0.3);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-    z-index: 100;
-}
-
-.back-button:hover {
-    background-color: var(--color-secondary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(15, 122, 112, 0.4);
-}

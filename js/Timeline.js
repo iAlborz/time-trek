@@ -7,10 +7,6 @@ import { TimelineRenderer } from './TimelineRenderer.js';
 import { TimelineAnimator } from './TimelineAnimator.js';
 import { ItemsLayer } from './ItemsLayer.js';
 
-// How precisely a date is expressed. Not stored as its own field — the date string
-// already encodes it ("2025" / "2025-03" / "2025-03-01" / "2025-03-01T14:30") and
-// round-trips through CSV and JSON unchanged, so precision is detected on read.
-// Each input type emits exactly the string format DateParser expects.
 // Pixels of movement before a mousedown counts as a pan rather than a click, so a
 // slight wobble while clicking an item doesn't swallow the click.
 const DRAG_THRESHOLD = 4;
@@ -22,6 +18,10 @@ const SCALE_WINDOW_BEFORE = 1;
 const SCALE_WINDOW_AFTER = 2;
 const SCALE_WINDOW = SCALE_WINDOW_BEFORE + 1 + SCALE_WINDOW_AFTER;
 
+// How precisely a date is expressed. Not stored as its own field — the date string
+// already encodes it ("2025" / "2025-03" / "2025-03-01" / "2025-03-01T14:30") and
+// round-trips through CSV and JSON unchanged, so precision is detected on read.
+// Each input type emits exactly the string format DateParser expects.
 const PRECISIONS = {
     year:     { inputType: 'text',           hint: 'Year, or BC/BCE, AD/CE, and deep time: 3000 BC · 65 MYA · 4.5 BYA' },
     month:    { inputType: 'month',          hint: '' },
@@ -175,7 +175,7 @@ export class Timeline {
         // that also live there.
         const container = this.canvas.parentElement;
         const fromControls = (e) =>
-            e.target.closest && e.target.closest('.top-controls, .scale-controls, .back-button');
+            e.target.closest && e.target.closest('.top-controls, .scale-controls, #back-btn');
 
         // Wheel zoom (zoom towards cursor)
         container.addEventListener('wheel', (e) => {
@@ -616,7 +616,7 @@ export class Timeline {
         const end = start + SCALE_WINDOW - 1;
 
         if (!this._scaleButtons) {
-            this._scaleButtons = [...document.querySelectorAll('.scale-btn[data-scale]')];
+            this._scaleButtons = [...document.querySelectorAll('[data-scale]')];
         }
         this._scaleButtons.forEach(btn => {
             const i = index.get(btn.dataset.scale);
